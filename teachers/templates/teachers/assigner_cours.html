@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Assigner Cours - {{ enseignant.nom_complet }}{% endblock %}
+{% block page_title %}Assigner des Cours{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-[#003366] mb-2">
+                <i class="bi bi-link-45deg"></i> Assigner des Cours
+            </h2>
+            <p class="text-gray-600">
+                Enseignant: <strong>{{ enseignant.nom_complet }}</strong> ({{ enseignant.matricule }})
+            </p>
+        </div>
+        <a href="{% url 'detail_enseignant' enseignant.matricule %}" 
+           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Colonne gauche: Cours déjà assignés -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-[#003366]">
+                <i class="bi bi-check-circle-fill text-green-500"></i> 
+                Cours Assignés ({{ cours_assignes.count }})
+            </h3>
+        </div>
+        
+        {% if cours_assignes %}
+        <div class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+            {% for cours in cours_assignes %}
+            <div class="border-2 border-green-200 bg-green-50 rounded-lg p-4 hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-[#003366] text-white px-3 py-1 rounded-full text-sm font-bold">
+                                {{ cours.code }}
+                            </span>
+                            <span class="bg-[#D4AF37] text-[#003366] px-2 py-1 rounded text-xs font-semibold">
+                                {{ cours.filiere.code }}
+                            </span>
+                            <span class="bg-gray-200 px-2 py-1 rounded text-xs">
+                                {{ cours.niveau.nom }}
+                            </span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-1">{{ cours.intitule }}</h4>
+                        <div class="text-xs text-gray-600 space-y-1">
+                            <p><i class="bi bi-calendar3"></i> Semestre {{ cours.semestre }} | {{ cours.annee_academique }}</p>
+                            {% if cours.jour_semaine %}
+                            <p><i class="bi bi-clock"></i> {{ cours.get_jour_semaine_display }} 
+                               {% if cours.heure_debut %}à {{ cours.heure_debut }}{% endif %}</p>
+                            {% endif %}
+                            <p><i class="bi bi-star-fill text-yellow-500"></i> {{ cours.credits }} crédits</p>
+                        </div>
+                    </div>
+                    <form method="post" class="ml-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="retirer">
+                        <input type="hidden" name="cours_id" value="{{ cours.id }}">
+                        <button type="submit" 
+                                onclick="return confirm('Retirer ce cours de {{ enseignant.nom_complet }} ?')"
+                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition">
+                            <i class="bi bi-x-circle"></i> Retirer
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-400">
+            <i class="bi bi-inbox text-6xl block mb-4"></i>
+            <p class="text-lg">Aucun cours assigné</p>
+            <p class="text-sm">Sélectionnez des cours dans la liste de droite</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Colonne droite: Cours disponibles -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="mb-6">
+            <h3 class="text-xl font-bold text-[#003366] mb-4">
+                <i class="bi bi-list-ul"></i> Cours Disponibles
+            </h3>
+            
+            <!-- Filtres -->
+            <form method="get" class="space-y-3">
+                <div>
+                    <input type="text" 
+                           name="search" 
+                           value="{{ search_query }}"
+                           placeholder="🔍 Rechercher par code ou intitulé..."
+                           class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-[#D4AF37] focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <select name="filiere" 
+                            class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-[#D4AF37] focus:outline-none"
+                            onchange="this.form.submit()">
+                        <option value="">Toutes filières</option>
+                        {% for filiere in filieres %}
+                        <option value="{{ filiere.id }}">{{ filiere.nom }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="niveau" 
+                            class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-[#D4AF37] focus:outline-none"
+                            onchange="this.form.submit()">
+                        <option value="">Tous niveaux</option>
+                        {% for niveau in niveaux %}
+                        <option value="{{ niveau.id }}">{{ niveau.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" 
+                        class="w-full bg-[#003366] hover:bg-[#004080] text-white px-4 py-2 rounded-lg transition font-semibold">
+                    <i class="bi bi-search"></i> Rechercher
+                </button>
+            </form>
+        </div>
+        
+        <!-- Liste des cours -->
+        {% if cours_disponibles %}
+        <div class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+            {% for cours in cours_disponibles %}
+            <div class="border-2 border-gray-200 bg-white rounded-lg p-4 hover:border-[#D4AF37] hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-gray-700 text-white px-3 py-1 rounded-full text-sm font-bold">
+                                {{ cours.code }}
+                            </span>
+                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-semibold">
+                                {{ cours.filiere.code }}
+                            </span>
+                            <span class="bg-gray-100 px-2 py-1 rounded text-xs">
+                                {{ cours.niveau.nom }}
+                            </span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-1">{{ cours.intitule }}</h4>
+                        <div class="text-xs text-gray-600 space-y-1">
+                            <p><i class="bi bi-calendar3"></i> Semestre {{ cours.semestre }}</p>
+                            {% if cours.enseignant %}
+                            <p class="text-orange-600">
+                                <i class="bi bi-person-fill"></i> Assigné à: {{ cours.enseignant.nom_complet }}
+                            </p>
+                            {% else %}
+                            <p class="text-green-600">
+                                <i class="bi bi-check-circle"></i> Disponible
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <form method="post" class="ml-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="assigner">
+                        <input type="hidden" name="cours_id" value="{{ cours.id }}">
+                        <button type="submit"
+                                class="bg-[#D4AF37] hover:bg-[#C4A000] text-[#003366] px-3 py-2 rounded-lg transition font-semibold">
+                            <i class="bi bi-plus-circle"></i> Assigner
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-400">
+            <i class="bi bi-search text-6xl block mb-4"></i>
+            <p class="text-lg">Aucun cours trouvé</p>
+            <p class="text-sm">Essayez d'autres critères de recherche</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Info box -->
+<div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+    <div class="flex">
+        <i class="bi bi-info-circle text-blue-500 text-xl mr-3"></i>
+        <div>
+            <h4 class="font-bold text-blue-900 mb-1">💡 Comment ça marche ?</h4>
+            <ul class="text-sm text-blue-800 space-y-1">
+                <li>✅ <strong>Assigner:</strong> Cliquez sur "Assigner" pour attribuer un cours à cet enseignant</li>
+                <li>❌ <strong>Retirer:</strong> Cliquez sur "Retirer" pour enlever un cours déjà assigné</li>
+                <li>🔍 <strong>Rechercher:</strong> Utilisez les filtres pour trouver des cours spécifiques</li>
+                <li>⚠️ Un cours peut être réassigné d'un enseignant à un autre</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Scrollbar personnalisée */
+    .overflow-y-auto::-webkit-scrollbar {
+        width: 8px;
+    }
+    .overflow-y-auto::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: #D4AF37;
+        border-radius: 10px;
+    }
+    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: #C4A000;
+    }
+</style>
+{% endblock %}

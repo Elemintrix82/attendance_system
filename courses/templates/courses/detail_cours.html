@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% block title %}Détail Séance - {{ seance.cours.code }}{% endblock %}
+{% block page_title %}Détail de la Séance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-calendar-event"></i> 
+                {{ seance.cours.code }} - {{ seance.date|date:"d/m/Y" }}
+            </h2>
+            <p class="text-muted mb-0">{{ seance.cours.intitule }}</p>
+        </div>
+        <a href="{% url 'liste_seances' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<!-- Informations de la séance -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-info-circle"></i> Informations générales
+            </h5>
+            
+            <table class="table table-borderless">
+                <tr>
+                    <th width="40%">Date :</th>
+                    <td><strong>{{ seance.date|date:"l d F Y" }}</strong></td>
+                </tr>
+                <tr>
+                    <th>Horaire :</th>
+                    <td>
+                        <i class="bi bi-clock"></i> 
+                        {{ seance.heure_debut|time:"H:i" }} - {{ seance.heure_fin|time:"H:i" }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Type de séance :</th>
+                    <td><span class="badge bg-info">{{ seance.get_type_seance_display }}</span></td>
+                </tr>
+                <tr>
+                    <th>Salle :</th>
+                    <td>
+                        {% if seance.salle %}
+                        <i class="bi bi-door-open"></i> {{ seance.salle.nom }} ({{ seance.salle.batiment }})
+                        {% else %}
+                        <span class="text-muted">Non définie</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Enseignant :</th>
+                    <td>
+                        {% if seance.cours.enseignant %}
+                        {{ seance.cours.enseignant.nom_complet }}
+                        {% else %}
+                        <span class="text-muted">Non assigné</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Présence :</th>
+                    <td>
+                        {% if seance.presente %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Effectuée
+                        </span>
+                        {% else %}
+                        <span class="badge bg-warning">
+                            <i class="bi bi-clock"></i> En attente
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-book"></i> Informations du cours
+            </h5>
+            
+            <table class="table table-borderless">
+                <tr>
+                    <th width="40%">Code :</th>
+                    <td><span class="badge bg-primary fs-6">{{ seance.cours.code }}</span></td>
+                </tr>
+                <tr>
+                    <th>Intitulé :</th>
+                    <td><strong>{{ seance.cours.intitule }}</strong></td>
+                </tr>
+                <tr>
+                    <th>Filière :</th>
+                    <td>
+                        <span class="badge" style="background: var(--accent-gold); color: var(--primary-blue);">
+                            {{ seance.cours.filiere.code }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Niveau :</th>
+                    <td><span class="badge bg-secondary">{{ seance.cours.niveau.nom }}</span></td>
+                </tr>
+                <tr>
+                    <th>Crédits :</th>
+                    <td>
+                        <i class="bi bi-star-fill text-warning"></i> {{ seance.cours.credits }} crédits
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques de présence -->
+{% if seance.presente %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card primary">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ presences.count }}</h3>
+                    <p class="text-muted small mb-0">Étudiants</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card success">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ seance.get_nombre_presents }}</h3>
+                    <p class="text-muted small mb-0">Présents</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card warning">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ seance.get_nombre_absents }}</h3>
+                    <p class="text-muted small mb-0">Absents</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card info">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ seance.get_taux_presence }}%</h3>
+                    <p class="text-muted small mb-0">Taux présence</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Contenu de la séance -->
+{% if seance.contenu %}
+<div class="table-card mb-4">
+    <h5 class="mb-3">
+        <i class="bi bi-file-text"></i> Contenu de la séance
+    </h5>
+    <p class="text-muted">{{ seance.contenu }}</p>
+</div>
+{% endif %}
+
+<!-- Liste des présences -->
+{% if seance.presente %}
+<div class="table-card">
+    <h5 class="mb-4">
+        <i class="bi bi-list-check"></i> Liste des présences ({{ presences.count }})
+    </h5>
+    
+    {% if presences %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th width="15%">Matricule</th>
+                    <th width="30%">Étudiant</th>
+                    <th width="15%">Filière</th>
+                    <th width="15%">Niveau</th>
+                    <th width="15%">Statut</th>
+                    <th width="10%">Remarque</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for presence in presences %}
+                <tr>
+                    <td>
+                        <span class="badge bg-secondary">{{ presence.etudiant.matricule }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ presence.etudiant.nom_complet }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge" style="background: var(--accent-gold); color: var(--primary-blue);">
+                            {{ presence.etudiant.filiere.code }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">{{ presence.etudiant.niveau.nom }}</span>
+                    </td>
+                    <td>
+                        {% if presence.statut == 'P' %}
+                        <span class="badge-present">Présent</span>
+                        {% elif presence.statut == 'A' %}
+                        <span class="badge-absent">Absent</span>
+                        {% elif presence.statut == 'R' %}
+                        <span class="badge-retard">Retard</span>
+                        {% else %}
+                        <span class="badge-justifie">Justifié</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small class="text-muted">{{ presence.remarque|default:"—" }}</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4">
+        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+        <p class="text-muted mt-2">Aucune présence enregistrée</p>
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<!-- Message si présence pas encore prise -->
+<div class="alert alert-warning">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+        <div>
+            <h6 class="mb-1">⚠️ Présence non effectuée</h6>
+            <p class="mb-0">La présence n'a pas encore été prise pour cette séance.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

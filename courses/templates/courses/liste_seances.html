@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des Séances{% endblock %}
+{% block page_title %}Gestion des Séances de Cours{% endblock %}
+
+{% block content %}
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card primary">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-calendar-event-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ total_seances }}</h3>
+                    <p class="text-muted small mb-0">Séances totales</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card success">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ seances_avec_presence }}</h3>
+                    <p class="text-muted small mb-0">Présence effectuée</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card warning">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ seances_sans_presence }}</h3>
+                    <p class="text-muted small mb-0">En attente</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="table-card mb-4">
+    <h5 class="mb-4">
+        <i class="bi bi-funnel-fill"></i> Filtres de recherche
+    </h5>
+    
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Rechercher</label>
+            <input type="text" 
+                   name="search" 
+                   value="{{ search_query }}"
+                   class="form-control" 
+                   placeholder="Code ou intitulé...">
+        </div>
+        
+        <div class="col-md-3">
+            <label class="form-label">Cours</label>
+            <select name="cours" class="form-select">
+                <option value="">Tous les cours</option>
+                {% for cours in cours_list %}
+                <option value="{{ cours.id }}" {% if cours_id == cours.id|stringformat:"s" %}selected{% endif %}>
+                    {{ cours.code }} - {{ cours.intitule|truncatewords:3 }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <label class="form-label">Type</label>
+            <select name="type_seance" class="form-select">
+                <option value="">Tous</option>
+                {% for code, label in types_seance %}
+                <option value="{{ code }}" {% if type_seance == code %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <label class="form-label">Date début</label>
+            <input type="date" name="date_debut" value="{{ date_debut }}" class="form-control">
+        </div>
+        
+        <div class="col-md-2">
+            <label class="form-label">Date fin</label>
+            <input type="date" name="date_fin" value="{{ date_fin }}" class="form-control">
+        </div>
+        
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary me-2">
+                <i class="bi bi-search"></i> Rechercher
+            </button>
+            <a href="{% url 'liste_seances' %}" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> Réinitialiser
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Liste des séances -->
+<div class="table-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0">
+            <i class="bi bi-list-ul"></i> Liste des séances ({{ page_obj.paginator.count }})
+        </h5>
+    </div>
+    
+    {% if page_obj %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Cours</th>
+                    <th>Type</th>
+                    <th>Horaire</th>
+                    <th>Salle</th>
+                    <th>Enseignant</th>
+                    <th>Présence</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for seance in page_obj %}
+                <tr>
+                    <td>
+                        <strong>{{ seance.date|date:"d/m/Y" }}</strong><br>
+                        <small class="text-muted">{{ seance.date|date:"l" }}</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">{{ seance.cours.code }}</span><br>
+                        <small>{{ seance.cours.intitule|truncatewords:4 }}</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">{{ seance.get_type_seance_display }}</span>
+                    </td>
+                    <td>
+                        <i class="bi bi-clock"></i> 
+                        {{ seance.heure_debut|time:"H:i" }} - {{ seance.heure_fin|time:"H:i" }}
+                    </td>
+                    <td>
+                        {% if seance.salle %}
+                        <i class="bi bi-door-open"></i> {{ seance.salle.nom }}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if seance.cours.enseignant %}
+                        <small>{{ seance.cours.enseignant.nom_complet }}</small>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if seance.presente %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Effectuée
+                        </span><br>
+                        <small class="text-muted">{{ seance.get_taux_presence }}%</small>
+                        {% else %}
+                        <span class="badge bg-warning">
+                            <i class="bi bi-clock"></i> En attente
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'detail_seance' seance.id %}" 
+                           class="btn btn-sm btn-primary">
+                            <i class="bi bi-eye"></i> Voir
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&cours={{ cours_id }}&type_seance={{ type_seance }}&date_debut={{ date_debut }}&date_fin={{ date_fin }}">
+                    Précédent
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&cours={{ cours_id }}&type_seance={{ type_seance }}&date_debut={{ date_debut }}&date_fin={{ date_fin }}">
+                    Suivant
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+        <p class="text-muted mt-3">Aucune séance trouvée</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

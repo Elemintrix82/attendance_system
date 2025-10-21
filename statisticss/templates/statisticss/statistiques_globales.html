@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistiques Globales{% endblock %}
+{% block page_title %}Statistiques de Présence{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="mb-2">
+        <i class="bi bi-graph-up-arrow"></i> Statistiques Globales de Présence
+    </h2>
+    <p class="text-muted mb-0">Vue d'ensemble de l'assiduité des étudiants</p>
+</div>
+
+<!-- Statistiques générales -->
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="stat-card primary">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ total_etudiants }}</h3>
+                    <p class="text-muted mb-0 small">Étudiants actifs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="stat-card success">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-book-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ total_cours }}</h3>
+                    <p class="text-muted mb-0 small">Cours actifs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="stat-card warning">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-calendar-check-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ total_seances }}</h3>
+                    <p class="text-muted mb-0 small">Séances effectuées</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="stat-card info">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ taux_presence_global }}%</h3>
+                    <p class="text-muted mb-0 small">Taux de présence global</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques par filière -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-folder2-open text-primary"></i> Taux de Présence par Filière
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Filière</th>
+                            <th class="text-center">Étudiants</th>
+                            <th class="text-center">Taux de présence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in stats_filieres %}
+                        <tr>
+                            <td>
+                                <strong>{{ stat.filiere.code }}</strong><br>
+                                <small class="text-muted">{{ stat.filiere.nom }}</small>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary">{{ stat.nb_etudiants }}</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="progress" style="height: 25px;">
+                                    {% if stat.taux_presence >= 75 %}
+                                    <div class="progress-bar bg-success" style="width: {{ stat.taux_presence }}%">
+                                        {{ stat.taux_presence }}%
+                                    </div>
+                                    {% elif stat.taux_presence >= 50 %}
+                                    <div class="progress-bar bg-warning" style="width: {{ stat.taux_presence }}%">
+                                        {{ stat.taux_presence }}%
+                                    </div>
+                                    {% else %}
+                                    <div class="progress-bar bg-danger" style="width: {{ stat.taux_presence }}%">
+                                        {{ stat.taux_presence }}%
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">Aucune donnée disponible</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistiques par niveau -->
+    <div class="col-md-6 mb-4">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-bar-chart-line text-success"></i> Taux de Présence par Niveau
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Niveau</th>
+                            <th class="text-center">Étudiants</th>
+                            <th class="text-center">Taux de présence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in stats_niveaux %}
+                        <tr>
+                            <td><strong>{{ stat.niveau.nom }}</strong></td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary">{{ stat.nb_etudiants }}</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="progress" style="height: 25px;">
+                                    {% if stat.taux_presence >= 75 %}
+                                    <div class="progress-bar bg-success" style="width: {{ stat.taux_presence }}%">
+                                        {{ stat.taux_presence }}%
+                                    </div>
+                                    {% elif stat.taux_presence >= 50 %}
+                                    <div class="progress-bar bg-warning" style="width: {{ stat.taux_presence }}%">
+                                        {{ stat.taux_presence }}%
+                                    </div>
+                                    {% else %}
+                                    <div class="progress-bar bg-danger" style="width: {{ stat.taux_presence }}%">
+                                        {{ stat.taux_presence }}%
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">Aucune donnée disponible</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="table-card">
+    <h5 class="mb-4">
+        <i class="bi bi-file-earmark-text text-warning"></i> Rapports Détaillés
+    </h5>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <a href="{% url 'statistiques_par_classe' %}" class="btn btn-outline-primary w-100 py-3">
+                <i class="bi bi-people fs-4 d-block mb-2"></i>
+                Statistiques par Classe
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'liste_rapports' %}" class="btn btn-outline-success w-100 py-3">
+                <i class="bi bi-folder2-open fs-4 d-block mb-2"></i>
+                Voir les Rapports
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'generer_rapport' %}" class="btn btn-outline-warning w-100 py-3">
+                <i class="bi bi-file-earmark-plus fs-4 d-block mb-2"></i>
+                Générer un Rapport
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

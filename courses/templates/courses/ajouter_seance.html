@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter Séance{% endblock %}
+{% block page_title %}Nouvelle Séance{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="table-card">
+            <h4 class="mb-4">
+                <i class="bi bi-calendar-plus"></i> 
+                Ajouter une séance pour {{ cours.code }}
+            </h4>
+            
+            <div class="alert alert-info mb-4">
+                <strong>Cours:</strong> {{ cours.intitule }}<br>
+                <strong>Filière:</strong> {{ cours.filiere.nom }} - {{ cours.niveau.nom }}
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label">Date <span class="text-danger">*</span></label>
+                    <input type="date" name="date" class="form-control" required>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Heure de début <span class="text-danger">*</span></label>
+                        <input type="time" name="heure_debut" class="form-control" 
+                               value="{{ cours.heure_debut|time:'H:i'|default:'' }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Heure de fin <span class="text-danger">*</span></label>
+                        <input type="time" name="heure_fin" class="form-control" 
+                               value="{{ cours.heure_fin|time:'H:i'|default:'' }}" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Salle</label>
+                    <select name="salle" class="form-select">
+                        <option value="">-- Choisir une salle --</option>
+                        {% for salle in salles %}
+                        <option value="{{ salle.id }}" 
+                                {% if cours.salle.id == salle.id %}selected{% endif %}>
+                            {{ salle.nom }} ({{ salle.get_type_salle_display }}) - {{ salle.capacite }} places
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Type de séance <span class="text-danger">*</span></label>
+                    <select name="type_seance" class="form-select" required>
+                        {% for value, label in types_seance %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Contenu de la séance</label>
+                    <textarea name="contenu" class="form-control" rows="4" 
+                              placeholder="Résumé du contenu qui sera abordé..."></textarea>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{% url 'detail_cours' cours.code %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Créer la séance
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

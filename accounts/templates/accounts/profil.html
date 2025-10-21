@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon Profil{% endblock %}
+{% block page_title %}Mon Profil{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="mb-2">
+        <i class="bi bi-person-circle"></i> Mon Profil
+    </h2>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="table-card text-center">
+            {% if user.profil.photo %}
+            <img src="{{ user.profil.photo.url }}" class="rounded-circle mb-3" width="150" height="150">
+            {% else %}
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                 style="width: 150px; height: 150px; font-size: 60px;">
+                {{ user.first_name.0|default:user.username.0 }}{{ user.last_name.0|default:"" }}
+            </div>
+            {% endif %}
+            
+            <h4>{{ user.get_full_name|default:user.username }}</h4>
+            <p class="text-muted">{{ user.username }}</p>
+            <span class="badge bg-primary mb-3">{{ user.profil.get_role_display }}</span>
+            
+            <hr>
+            
+            <div class="text-start">
+                <p class="mb-2">
+                    <i class="bi bi-envelope"></i> <strong>Email:</strong><br>
+                    {{ user.email|default:"Non renseigné" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-telephone"></i> <strong>Téléphone:</strong><br>
+                    {{ user.profil.telephone|default:"Non renseigné" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-calendar"></i> <strong>Membre depuis:</strong><br>
+                    {{ user.date_joined|date:"d/m/Y" }}
+                </p>
+            </div>
+            
+            <hr>
+            
+            <a href="{% url 'changer_mot_de_passe' %}" class="btn btn-outline-primary w-100">
+                <i class="bi bi-key"></i> Changer le mot de passe
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-pencil-square"></i> Modifier mes informations
+            </h5>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" name="first_name" class="form-control" 
+                               value="{{ user.first_name }}" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="last_name" class="form-control" 
+                               value="{{ user.last_name }}" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" 
+                           value="{{ user.email }}">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Téléphone</label>
+                    <input type="tel" name="telephone" class="form-control" 
+                           value="{{ user.profil.telephone }}">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Adresse</label>
+                    <textarea name="adresse" class="form-control" rows="3">{{ user.profil.adresse }}</textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Photo de profil</label>
+                    <input type="file" name="photo" class="form-control" accept="image/*">
+                    <small class="text-muted">Format accepté: JPG, PNG (Max: 5MB)</small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Enregistrer les modifications
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

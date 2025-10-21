@@ -1,0 +1,630 @@
+{% load django_browser_reload %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Fotso Tekam Valdez Wilsons, Dada Nelson">
+    <meta name="description" content="Système de Gestion de Présence - Polytechnique Douala">
+    <meta name="keywords" content="présence, polytechnique, douala, gestion académique">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{% block title %}Système de Présence{% endblock %} - Polytechnique Douala</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/logo.ico' %}">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --primary-blue: #003366;
+            --secondary-blue: #004080;
+            --accent-gold: #D4AF37;
+            --light-gold: #F5E6C3;
+            --sidebar-width: 280px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        /* ========== SIDEBAR MODERNE ========== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            overflow-y: auto;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.2);
+        }
+        
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--accent-gold);
+            border-radius: 3px;
+        }
+        
+        /* Logo Section */
+        .sidebar .logo-section {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #002244 100%);
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 3px solid var(--accent-gold);
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sidebar .logo-section img {
+            max-width: 100px;
+            height: auto;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            margin-bottom: 12px;
+            display: block;
+        }
+        
+        .sidebar .logo-section h4 {
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 8px 0 4px 0;
+        }
+        
+        .sidebar .logo-section p {
+            color: var(--accent-gold);
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        /* Navigation Links */
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.9);
+            padding: 12px 20px;
+            margin: 4px 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 3px solid transparent;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-left-color: var(--accent-gold);
+            transform: translateX(3px);
+        }
+        
+        .sidebar .nav-link.active {
+            background: rgba(212,175,55,0.25);
+            color: white;
+            border-left-color: var(--accent-gold);
+            font-weight: 600;
+        }
+        
+        .sidebar .nav-link i {
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* ========== MENU DÉROULANT ========== */
+        .menu-dropdown {
+            margin: 4px 12px;
+        }
+        
+        .menu-dropdown-toggle {
+            color: rgba(255,255,255,0.9);
+            padding: 12px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            font-size: 0.95rem;
+        }
+        
+        .menu-dropdown-toggle:hover {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-left-color: var(--accent-gold);
+        }
+        
+        .menu-dropdown-toggle.active {
+            background: rgba(212,175,55,0.25);
+            color: white;
+            border-left-color: var(--accent-gold);
+        }
+        
+        .menu-dropdown-toggle i.icon {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .menu-dropdown-toggle i.arrow {
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+            color: var(--accent-gold);
+        }
+        
+        .menu-dropdown-toggle.open i.arrow {
+            transform: rotate(180deg);
+        }
+        
+        /* Sous-menu */
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            background: rgba(0,0,0,0.15);
+            border-radius: 8px;
+            margin-top: 4px;
+        }
+        
+        .submenu.open {
+            max-height: 500px;
+        }
+        
+        .submenu .nav-link {
+            padding: 10px 20px 10px 50px;
+            font-size: 0.9rem;
+            margin: 2px 8px;
+        }
+        
+        .submenu .nav-link i {
+            font-size: 0.95rem;
+        }
+        
+        /* Divider */
+        .sidebar hr {
+            border-color: rgba(212,175,55,0.3);
+            margin: 15px 20px;
+        }
+        
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            background: #f8f9fa;
+        }
+        
+        /* Top Navbar */
+        .top-navbar {
+            background: white;
+            padding: 18px 35px;
+            box-shadow: 0 2px 8px rgba(0,51,102,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            border-bottom: 2px solid var(--accent-gold);
+        }
+        
+        .top-navbar .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: 2px solid var(--accent-gold);
+        }
+        
+        .top-navbar .badge {
+            background: var(--accent-gold);
+            color: var(--primary-blue);
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+        }
+        
+        /* Content Area */
+        .content-area {
+            padding: 35px;
+        }
+        
+        /* Stat Cards */
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 28px;
+            box-shadow: 0 3px 15px rgba(0,51,102,0.1);
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            border-top: 4px solid transparent;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 25px rgba(0,51,102,0.15);
+        }
+        
+        .stat-card.primary { border-top-color: var(--primary-blue); }
+        .stat-card.success { border-top-color: #10b981; }
+        .stat-card.warning { border-top-color: var(--accent-gold); }
+        .stat-card.info { border-top-color: #3b82f6; }
+        
+        .stat-card .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+        }
+        
+        .stat-card.primary .icon { background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)); }
+        .stat-card.success .icon { background: linear-gradient(135deg, #10b981, #059669); }
+        .stat-card.warning .icon { background: linear-gradient(135deg, var(--accent-gold), #C4A000); }
+        .stat-card.info .icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        
+        /* Table Card */
+        .table-card {
+            background: white;
+            border-radius: 15px;
+            padding: 28px;
+            box-shadow: 0 2px 12px rgba(0,51,102,0.08);
+            margin-bottom: 25px;
+        }
+        
+        .table-card h5 {
+            color: var(--primary-blue);
+            font-weight: 700;
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,51,102,0.4);
+        }
+        
+        .btn-warning {
+            background: var(--accent-gold);
+            border: none;
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+        
+        /* Badges */
+        .badge-present { background: #10b981; color: white; padding: 6px 12px; border-radius: 6px; }
+        .badge-absent { background: #ef4444; color: white; padding: 6px 12px; border-radius: 6px; }
+        .badge-retard { background: var(--accent-gold); color: var(--primary-blue); padding: 6px 12px; border-radius: 6px; }
+        .badge-justifie { background: #3b82f6; color: white; padding: 6px 12px; border-radius: 6px; }
+        
+        /* Tables */
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: white;
+        }
+        
+        .table tbody tr:hover {
+            background: rgba(212,175,55,0.05);
+        }
+        
+        /* Alerts */
+        .alert { border-radius: 12px; border: none; }
+        .alert-success { background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #065f46; border-left: 4px solid #10b981; }
+        .alert-info { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: var(--primary-blue); border-left: 4px solid var(--primary-blue); }
+        
+        /* Mobile */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <!-- Logo -->
+        <div class="logo-section">
+            <img src="{% static 'images/logo.png' %}" alt="Polytechnique Douala">
+            <h4>Polytechnique Douala</h4>
+            <p>SYSTÈME DE PRÉSENCE</p>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="nav flex-column">
+            <!-- Dashboard -->
+            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+               href="{% url 'dashboard' %}">
+                <i class="bi bi-speedometer2 icon"></i>
+                <span>Dashboard</span>
+            </a>
+            
+            {% if user.profil.est_admin or user.profil.est_scolarite %}
+            <!-- ========== MENU ADMIN / SCOLARITÉ ========== -->
+            
+            <!-- Gestion Académique -->
+            <div class="menu-dropdown">
+                <div class="menu-dropdown-toggle" onclick="toggleMenu('academique')">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-mortarboard-fill icon"></i>
+                        <span>Gestion Académique</span>
+                    </div>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </div>
+                <div class="submenu" id="menu-academique">
+                    <a class="nav-link {% if 'etudiants' in request.path %}active{% endif %}" 
+                       href="{% url 'liste_etudiants' %}">
+                        <i class="bi bi-people"></i>
+                        <span>Étudiants</span>
+                    </a>
+                    <a class="nav-link {% if 'enseignants' in request.path %}active{% endif %}" 
+                       href="{% url 'liste_enseignants' %}">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Enseignants</span>
+                    </a>
+                    <a class="nav-link {% if 'filieres' in request.path %}active{% endif %}" 
+                       href="{% url 'liste_filieres' %}">
+                        <i class="bi bi-diagram-3"></i>
+                        <span>Filières</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Gestion des Cours (Admin/Scolarité) -->
+            <div class="menu-dropdown">
+                <div class="menu-dropdown-toggle" onclick="toggleMenu('cours')">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-book-fill icon"></i>
+                        <span>Gestion des Cours</span>
+                    </div>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </div>
+                <div class="submenu" id="menu-cours">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'liste_cours' %}active{% endif %}" 
+                       href="{% url 'liste_cours' %}">
+                        <i class="bi bi-list-ul"></i>
+                        <span>Liste des Cours</span>
+                    </a>
+                    <a class="nav-link {% if 'salles' in request.path %}active{% endif %}" 
+                       href="{% url 'liste_salles' %}">
+                        <i class="bi bi-door-open"></i>
+                        <span>Salles</span>
+                    </a>
+                    <a class="nav-link {% if 'seances' in request.path %}active{% endif %}" 
+                       href="{% url 'liste_seances' %}">
+                        <i class="bi bi-calendar-event"></i>
+                        <span>Séances</span>
+                    </a>
+                    <a class="nav-link {% if 'assignations' in request.path %}active{% endif %}" 
+                       href="{% url 'gerer_assignations' %}">
+                        <i class="bi bi-link-45deg"></i>
+                        <span>⭐ Assignations</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Présences (Admin/Scolarité) -->
+            <div class="menu-dropdown">
+                <div class="menu-dropdown-toggle" onclick="toggleMenu('presences')">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-check2-square icon"></i>
+                        <span>Présences</span>
+                    </div>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </div>
+                <div class="submenu" id="menu-presences">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'liste_presences' %}active{% endif %}" 
+                       href="{% url 'liste_presences' %}">
+                        <i class="bi bi-list-check"></i>
+                        <span>Liste Présences</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Statistiques (Admin/Scolarité) -->
+            <div class="menu-dropdown">
+                <div class="menu-dropdown-toggle" onclick="toggleMenu('stats')">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-graph-up-arrow icon"></i>
+                        <span>Statistiques</span>
+                    </div>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </div>
+                <div class="submenu" id="menu-stats">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'statistiques_globales' %}active{% endif %}" 
+                       href="{% url 'statistiques_globales' %}">
+                        <i class="bi bi-pie-chart"></i>
+                        <span>Vue Globale</span>
+                    </a>
+                    <a class="nav-link {% if 'par-classe' in request.path %}active{% endif %}" 
+                       href="{% url 'statistiques_par_classe' %}">
+                        <i class="bi bi-bar-chart"></i>
+                        <span>Par Classe</span>
+                    </a>
+                </div>
+            </div>
+            
+            {% elif user.profil.est_enseignant %}
+            <!-- ========== MENU ENSEIGNANT (LIMITÉ) ========== -->
+            
+            <!-- Mes Cours -->
+            <a class="nav-link {% if request.resolver_match.url_name == 'liste_cours' %}active{% endif %}" 
+               href="{% url 'liste_cours' %}">
+                <i class="bi bi-book-fill icon"></i>
+                <span>Mes Cours</span>
+            </a>
+            
+            <!-- Mes Séances -->
+            <a class="nav-link {% if 'seances' in request.path %}active{% endif %}" 
+               href="{% url 'liste_seances' %}">
+                <i class="bi bi-calendar-event icon"></i>
+                <span>Mes Séances</span>
+            </a>
+            
+            <!-- Prendre Présence -->
+            <a class="nav-link {% if 'presences' in request.path %}active{% endif %}" 
+               href="{% url 'liste_presences' %}">
+                <i class="bi bi-check2-square icon"></i>
+                <span>Prendre Présence</span>
+            </a>
+            
+            {% endif %}
+            
+            <hr>
+            
+            <!-- Mon Profil -->
+            <a class="nav-link {% if 'profil' in request.path %}active{% endif %}" 
+               href="{% url 'profil' %}">
+                <i class="bi bi-person-circle icon"></i>
+                <span>Mon Profil</span>
+            </a>
+            
+            <!-- Déconnexion -->
+            <a class="nav-link" href="{% url 'logout' %}">
+                <i class="bi bi-box-arrow-right icon"></i>
+                <span>Déconnexion</span>
+            </a>
+        </nav>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-link d-md-none p-0" onclick="toggleSidebar()">
+                        <i class="bi bi-list fs-3" style="color: var(--primary-blue);"></i>
+                    </button>
+                    <span class="fs-5 fw-bold" style="color: var(--primary-blue);">
+                        {% block page_title %}Système de Présence{% endblock %}
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="user-avatar">
+                        {{ user.first_name.0|default:user.username.0|upper }}
+                    </div>
+                    <div class="d-none d-md-block">
+                        <div class="fw-semibold" style="color: var(--primary-blue);">
+                            {{ user.get_full_name|default:user.username }}
+                        </div>
+                        <small class="text-muted">{{ user.email }}</small>
+                    </div>
+                    <span class="badge">{{ user.profil.get_role_display }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    <i class="bi bi-{% if message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% block content %}{% endblock %}
+        </div>
+        
+        <!-- Footer -->
+        <footer class="text-center py-4" style="color: var(--primary-blue);">
+            <p class="mb-1">&copy; 2025 Polytechnique Douala - Système de Gestion de Présence</p>
+        </footer>
+    </div>
+    {% else %}
+    {% block login_content %}{% endblock %}
+    {% endif %}
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Toggle Sidebar Mobile
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+        }
+        
+        // Toggle Dropdown Menu
+        function toggleMenu(menuId) {
+            const menu = document.getElementById('menu-' + menuId);
+            const toggle = menu.previousElementSibling;
+            
+            menu.classList.toggle('open');
+            toggle.classList.toggle('open');
+        }
+        
+        // Auto-open active menu
+        document.addEventListener('DOMContentLoaded', function() {
+            const activeLink = document.querySelector('.submenu .nav-link.active');
+            if (activeLink) {
+                const submenu = activeLink.closest('.submenu');
+                const toggle = submenu.previousElementSibling;
+                submenu.classList.add('open');
+                toggle.classList.add('open');
+            }
+        });
+        
+        // Auto-hide alerts
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                new bootstrap.Alert(alert).close();
+            });
+        }, 5000);
+    </script>
+    
+    {% if debug %}{% django_browser_reload_script %}{% endif %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

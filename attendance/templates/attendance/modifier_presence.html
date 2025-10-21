@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier Présence{% endblock %}
+{% block page_title %}Modifier la Présence{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-pencil-square"></i> Modifier la Présence
+            </h2>
+            <p class="text-muted mb-0">
+                {{ presence.etudiant.nom_complet }} - {{ presence.seance.cours.code }} - {{ presence.seance.date|date:"d/m/Y" }}
+            </p>
+        </div>
+        <a href="{% url 'liste_presences' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="table-card">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Informations de la séance -->
+                <div class="mb-4 p-3" style="background: rgba(0,51,102,0.05); border-left: 4px solid var(--accent-gold); border-radius: 8px;">
+                    <h6 class="fw-bold mb-2">📚 Informations de la séance</h6>
+                    <p class="mb-1"><strong>Cours :</strong> {{ presence.seance.cours.code }} - {{ presence.seance.cours.intitule }}</p>
+                    <p class="mb-1"><strong>Date :</strong> {{ presence.seance.date|date:"l d F Y" }}</p>
+                    <p class="mb-1"><strong>Horaire :</strong> {{ presence.seance.heure_debut|time:"H:i" }} - {{ presence.seance.heure_fin|time:"H:i" }}</p>
+                    <p class="mb-0"><strong>Étudiant :</strong> {{ presence.etudiant.matricule }} - {{ presence.etudiant.nom_complet }}</p>
+                </div>
+                
+                <!-- Statut de présence -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-clipboard-check"></i> Statut de présence <span class="text-danger">*</span>
+                    </label>
+                    <div class="btn-group w-100" role="group">
+                        {% for value, label in statuts %}
+                        <input type="radio" class="btn-check" name="statut" id="statut_{{ value }}" value="{{ value }}"
+                               {% if presence.statut == value %}checked{% endif %} required>
+                        <label class="btn btn-outline-{% if value == 'P' %}success{% elif value == 'A' %}danger{% elif value == 'R' %}warning{% else %}info{% endif %}" 
+                               for="statut_{{ value }}">
+                            {% if value == 'P' %}
+                            <i class="bi bi-check-circle"></i> Présent
+                            {% elif value == 'A' %}
+                            <i class="bi bi-x-circle"></i> Absent
+                            {% elif value == 'R' %}
+                            <i class="bi bi-clock-history"></i> Retard
+                            {% else %}
+                            <i class="bi bi-file-earmark-text"></i> Justifié
+                            {% endif %}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Heure d'arrivée -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-clock"></i> Heure d'arrivée
+                    </label>
+                    <input type="time" 
+                           name="heure_arrivee" 
+                           class="form-control"
+                           value="{% if presence.heure_arrivee %}{{ presence.heure_arrivee|time:'H:i' }}{% endif %}">
+                    <small class="text-muted">Obligatoire pour les retards</small>
+                </div>
+                
+                <!-- Remarque -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-chat-left-text"></i> Remarque
+                    </label>
+                    <textarea name="remarque" 
+                              class="form-control" 
+                              rows="3" 
+                              placeholder="Ajoutez une remarque (optionnel)...">{{ presence.remarque }}</textarea>
+                </div>
+                
+                <!-- Justificatif -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-paperclip"></i> Justificatif (PDF, Image)
+                    </label>
+                    {% if presence.justification %}
+                    <div class="alert alert-info mb-2">
+                        <i class="bi bi-file-earmark-check"></i> 
+                        Fichier actuel : <a href="{{ presence.justification.url }}" target="_blank">Voir le justificatif</a>
+                    </div>
+                    {% endif %}
+                    <input type="file" 
+                           name="justification" 
+                           class="form-control"
+                           accept=".pdf,.jpg,.jpeg,.png">
+                    <small class="text-muted">Formats acceptés : PDF, JPG, PNG (max 5Mo)</small>
+                </div>
+                
+                <!-- Boutons d'action -->
+                <div class="d-flex justify-content-between pt-3 border-top">
+                    <a href="{% url 'liste_presences' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

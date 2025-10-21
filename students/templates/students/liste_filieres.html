@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des Filières{% endblock %}
+{% block page_title %}Gestion des Filières{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="mb-2">
+        <i class="bi bi-folder2-open"></i> Liste des Filières
+    </h2>
+</div>
+
+<div class="row">
+    {% for filiere in filieres %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-primary">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <span class="badge bg-primary fs-6">{{ filiere.code }}</span>
+                </h5>
+                <h6 class="card-subtitle mb-3 text-primary">{{ filiere.nom }}</h6>
+                
+                {% if filiere.description %}
+                <p class="card-text text-muted small">{{ filiere.description|truncatewords:20 }}</p>
+                {% endif %}
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-people-fill text-primary"></i>
+                        <strong>{{ filiere.nb_etudiants }}</strong> étudiant(s)
+                    </div>
+                    <a href="{% url 'detail_filiere' filiere.code %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> Voir détails
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="table-card text-center py-5">
+            <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+            <p class="text-muted">Aucune filière disponible</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

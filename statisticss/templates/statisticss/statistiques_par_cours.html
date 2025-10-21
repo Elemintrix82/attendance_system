@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistiques - {{ cours.code }}{% endblock %}
+{% block page_title %}Statistiques Cours{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="mb-2">
+        <span class="badge bg-primary me-2">{{ cours.code }}</span>
+        {{ cours.intitule }}
+    </h2>
+    <p class="text-muted mb-0">
+        {{ cours.filiere.nom }} - {{ cours.niveau.nom }} | 
+        Enseignant: {{ cours.enseignant.nom_complet|default:"Non assigné" }}
+    </p>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card primary">
+            <h3>{{ total_seances }}</h3>
+            <p class="small mb-0">Séances effectuées</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card success">
+            <h3>{{ taux_moyen }}%</h3>
+            <p class="small mb-0">Taux moyen de présence</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card info">
+            <h3>{{ cours.credits }}</h3>
+            <p class="small mb-0">Crédits</p>
+        </div>
+    </div>
+</div>
+
+<div class="table-card">
+    <h5 class="mb-4">
+        <i class="bi bi-calendar-check"></i> Taux de présence par séance
+    </h5>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Horaire</th>
+                    <th>Type</th>
+                    <th>Salle</th>
+                    <th>Total étudiants</th>
+                    <th>Présents</th>
+                    <th>Taux</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats_seances %}
+                <tr>
+                    <td>{{ stat.seance.date|date:"d/m/Y" }}</td>
+                    <td>{{ stat.seance.heure_debut }} - {{ stat.seance.heure_fin }}</td>
+                    <td><span class="badge bg-info">{{ stat.seance.get_type_seance_display }}</span></td>
+                    <td>{{ stat.seance.salle|default:"—" }}</td>
+                    <td>{{ stat.total }}</td>
+                    <td><span class="badge bg-success">{{ stat.presents }}</span></td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            {% if stat.taux >= 75 %}
+                            <div class="progress-bar bg-success" style="width: {{ stat.taux }}%">{{ stat.taux }}%</div>
+                            {% elif stat.taux >= 50 %}
+                            <div class="progress-bar bg-warning" style="width: {{ stat.taux }}%">{{ stat.taux }}%</div>
+                            {% else %}
+                            <div class="progress-bar bg-danger" style="width: {{ stat.taux }}%">{{ stat.taux }}%</div>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">Aucune séance</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

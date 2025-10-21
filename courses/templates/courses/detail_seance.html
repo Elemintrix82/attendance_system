@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Séance - {{ seance.cours.code }}{% endblock %}
+{% block page_title %}Détail Séance{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="mb-2">
+            <span class="badge bg-primary">{{ seance.cours.code }}</span>
+            {{ seance.cours.intitule }}
+        </h2>
+        <p class="text-muted mb-0">
+            {{ seance.date|date:"l d F Y" }} | 
+            {{ seance.heure_debut }} - {{ seance.heure_fin }} |
+            {{ seance.get_type_seance_display }}
+        </p>
+    </div>
+    <div>
+        {% if not seance.presente %}
+        <a href="{% url 'prendre_presence' seance.id %}" class="btn btn-success">
+            <i class="bi bi-clipboard-check"></i> Prendre la présence
+        </a>
+        {% endif %}
+        <a href="{% url 'detail_cours' seance.cours.code %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au cours
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="table-card">
+            <h5 class="mb-3">Informations</h5>
+            <p><strong>Date:</strong> {{ seance.date|date:"d/m/Y" }}</p>
+            <p><strong>Horaire:</strong> {{ seance.heure_debut }} - {{ seance.heure_fin }}</p>
+            <p><strong>Salle:</strong> {{ seance.salle|default:"Non définie" }}</p>
+            <p><strong>Type:</strong> <span class="badge bg-info">{{ seance.get_type_seance_display }}</span></p>
+            {% if seance.contenu %}
+            <p><strong>Contenu:</strong><br>{{ seance.contenu }}</p>
+            {% endif %}
+        </div>
+        
+        {% if seance.presente %}
+        <div class="table-card mt-4">
+            <h5 class="mb-3">Statistiques</h5>
+            <div class="stat-card success mb-2">
+                <h3>{{ presents }}</h3>
+                <p class="small mb-0">Présents</p>
+            </div>
+            <div class="stat-card warning mb-2">
+                <h3>{{ retards }}</h3>
+                <p class="small mb-0">Retards</p>
+            </div>
+            <div class="stat-card info mb-2">
+                <h3>{{ absents }}</h3>
+                <p class="small mb-0">Absents</p>
+            </div>
+            <div class="stat-card primary">
+                <h3>{{ taux_presence }}%</h3>
+                <p class="small mb-0">Taux de présence</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-8">
+        <div class="table-card">
+            <h5 class="mb-4">Présences ({{ total }})</h5>
+            
+            {% if seance.presente %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Matricule</th>
+                            <th>Nom</th>
+                            <th>Statut</th>
+                            <th>Heure</th>
+                            <th>Remarque</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for presence in presences %}
+                        <tr>
+                            <td>{{ presence.etudiant.matricule }}</td>
+                            <td>{{ presence.etudiant.nom_complet }}</td>
+                            <td>
+                                {% if presence.statut == 'P' %}
+                                <span class="badge badge-present">Présent</span>
+                                {% elif presence.statut == 'A' %}
+                                <span class="badge badge-absent">Absent</span>
+                                {% elif presence.statut == 'R' %}
+                                <span class="badge badge-retard">Retard</span>
+                                {% else %}
+                                <span class="badge badge-justifie">Justifié</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ presence.heure_arrivee|default:"—" }}</td>
+                            <td>{{ presence.remarque|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-clipboard-x fs-1 d-block mb-3"></i>
+                <p>La présence n'a pas encore été prise pour cette séance</p>
+                <a href="{% url 'prendre_presence' seance.id %}" class="btn btn-success">
+                    <i class="bi bi-clipboard-check"></i> Prendre la présence maintenant
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

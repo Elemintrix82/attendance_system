@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des Enseignants{% endblock %}
+{% block page_title %}Gestion des Enseignants{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="mb-2">
+            <i class="bi bi-person-badge-fill"></i> Liste des Enseignants
+        </h2>
+        <p class="text-muted mb-0">{{ total_enseignants }} enseignant(s) actif(s)</p>
+    </div>
+    <a href="{% url 'ajouter_enseignant' %}" class="btn btn-primary btn-custom">
+        <i class="bi bi-person-plus"></i> Créer un Enseignant
+    </a>
+</div>
+
+<!-- Filtres et Recherche -->
+<div class="table-card mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-6">
+            <input type="text" name="search" class="form-control" 
+                   placeholder="Rechercher (matricule, nom, email, spécialité...)" 
+                   value="{{ search_query }}">
+        </div>
+        <div class="col-md-4">
+            <select name="grade" class="form-select">
+                <option value="">Tous les grades</option>
+                {% for value, label in grades %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> Rechercher
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Photo</th>
+                    <th>Matricule</th>
+                    <th>Nom Complet</th>
+                    <th>Grade</th>
+                    <th>Spécialité</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Nb Cours</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enseignant in page_obj %}
+                <tr>
+                    <td>
+                        {% if enseignant.photo %}
+                        <div class="d-flex justify-content-center">
+                            <img src="{{ enseignant.photo.url }}" class="rounded-circle" 
+                                 width="40" height="40" style="object-fit: cover;">
+                        </div>
+                        {% else %}
+                        <div class="d-flex justify-content-center">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px;">
+                                {{ enseignant.nom.0 }}{{ enseignant.prenom.0 }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ enseignant.matricule }}</strong></td>
+                    <td>{{ enseignant.nom_complet }}</td>
+                    <td>
+                        {% if enseignant.grade %}
+                        <span class="badge bg-success">{{ enseignant.get_grade_display }}</span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ enseignant.specialite|default:"—" }}</td>
+                    <td>{{ enseignant.email }}</td>
+                    <td>{{ enseignant.telephone|default:"—" }}</td>
+                    <td>
+                        <span class="badge bg-primary">{{ enseignant.get_nombre_cours }}</span>
+                    </td>
+                    <td>
+                        <a href="{% url 'detail_enseignant' enseignant.matricule %}" 
+                           class="btn btn-sm btn-outline-primary" title="Voir">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'modifier_enseignant' enseignant.matricule %}" 
+                           class="btn btn-sm btn-outline-warning" title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                        Aucun enseignant trouvé
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

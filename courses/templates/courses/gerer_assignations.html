@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+
+{% block title %}Gérer les Assignations{% endblock %}
+{% block page_title %}Gestion des Assignations Cours ↔ Enseignant{% endblock %}
+
+{% block content %}
+<!-- En-tête avec statistiques -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card primary">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-book-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ total_cours }}</h3>
+                    <p class="text-muted small mb-0">Cours totaux</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card success">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ cours_assignes }}</h3>
+                    <p class="text-muted small mb-0">Cours assignés</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card warning">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ cours_non_assignes }}</h3>
+                    <p class="text-muted small mb-0">Sans enseignant</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card info">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ taux_assignation }}%</h3>
+                    <p class="text-muted small mb-0">Taux d'assignation</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres de recherche -->
+<div class="table-card mb-4">
+    <h5 class="mb-4">
+        <i class="bi bi-funnel-fill text-primary"></i> Filtres de recherche
+    </h5>
+    
+    <form method="get" class="row g-3">
+        <!-- Recherche textuelle -->
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-search"></i> Rechercher
+            </label>
+            <input type="text" 
+                   name="search" 
+                   value="{{ search_query }}"
+                   class="form-control" 
+                   placeholder="Code ou intitulé du cours...">
+        </div>
+        
+        <!-- Filière -->
+        <div class="col-md-2">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-mortarboard"></i> Filière
+            </label>
+            <select name="filiere" class="form-select">
+                <option value="">Toutes</option>
+                {% for filiere in filieres %}
+                <option value="{{ filiere.id }}" {% if filiere_id == filiere.id|stringformat:"s" %}selected{% endif %}>
+                    {{ filiere.code }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Niveau -->
+        <div class="col-md-2">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-layers"></i> Niveau
+            </label>
+            <select name="niveau" class="form-select">
+                <option value="">Tous</option>
+                {% for niveau in niveaux %}
+                <option value="{{ niveau.id }}" {% if niveau_id == niveau.id|stringformat:"s" %}selected{% endif %}>
+                    {{ niveau.nom }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Semestre -->
+        <div class="col-md-2">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-calendar3"></i> Semestre
+            </label>
+            <select name="semestre" class="form-select">
+                <option value="">Tous</option>
+                <option value="1" {% if semestre == "1" %}selected{% endif %}>Semestre 1</option>
+                <option value="2" {% if semestre == "2" %}selected{% endif %}>Semestre 2</option>
+            </select>
+        </div>
+        
+        <!-- Statut -->
+        <div class="col-md-2">
+            <label class="form-label fw-semibold">
+                <i class="bi bi-filter"></i> Statut
+            </label>
+            <select name="statut" class="form-select">
+                <option value="">Tous</option>
+                <option value="assigne" {% if statut == "assigne" %}selected{% endif %}>Assignés</option>
+                <option value="non_assigne" {% if statut == "non_assigne" %}selected{% endif %}>Non assignés</option>
+            </select>
+        </div>
+        
+        <!-- Boutons -->
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary me-2">
+                <i class="bi bi-search"></i> Rechercher
+            </button>
+            <a href="{% url 'gerer_assignations' %}" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> Réinitialiser
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Tableau des cours -->
+<div class="table-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0">
+            <i class="bi bi-list-ul"></i> Liste des cours ({{ cours_list.count }})
+        </h5>
+    </div>
+    
+    {% if cours_list %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th width="12%">Code</th>
+                    <th width="25%">Intitulé</th>
+                    <th width="10%">Filière</th>
+                    <th width="10%">Niveau</th>
+                    <th width="8%">Sem.</th>
+                    <th width="20%">Enseignant assigné</th>
+                    <th width="15%" class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cours in cours_list %}
+                <tr id="cours-{{ cours.id }}">
+                    <td>
+                        <span class="badge bg-primary fs-6">{{ cours.code }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ cours.intitule }}</strong>
+                        <br>
+                        <small class="text-muted">
+                            <i class="bi bi-star-fill text-warning"></i> {{ cours.credits }} crédits
+                        </small>
+                    </td>
+                    <td>
+                        <span class="badge" style="background: var(--accent-gold); color: var(--primary-blue);">
+                            {{ cours.filiere.code }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">{{ cours.niveau.nom }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-info">S{{ cours.semestre }}</span>
+                    </td>
+                    <td>
+                        <div id="enseignant-info-{{ cours.id }}">
+                            {% if cours.enseignant %}
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-2" style="width: 35px; height: 35px; font-size: 0.9rem;">
+                                    {{ cours.enseignant.nom.0 }}{{ cours.enseignant.prenom.0 }}
+                                </div>
+                                <div>
+                                    <div class="fw-semibold text-success">
+                                        {{ cours.enseignant.nom_complet }}
+                                    </div>
+                                    <small class="text-muted">{{ cours.enseignant.matricule }}</small>
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-exclamation-triangle"></i> Non assigné
+                            </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        {% if cours.enseignant %}
+                        <!-- Bouton Modifier -->
+                        <button type="button" 
+                                class="btn btn-sm btn-warning me-1"
+                                onclick="openModal('{{ cours.id }}', '{{ cours.code }}', '{{ cours.enseignant.id }}')">
+                            <i class="bi bi-pencil"></i> Modifier
+                        </button>
+                        <!-- Bouton Retirer -->
+                        <button type="button"
+                                class="btn btn-sm btn-danger"
+                                onclick="retirerEnseignant('{{ cours.code }}', '{{ cours.id }}')">
+                            <i class="bi bi-x-circle"></i> Retirer
+                        </button>
+                        {% else %}
+                        <!-- Bouton Assigner -->
+                        <button type="button"
+                                class="btn btn-sm btn-success"
+                                onclick="openModal('{{ cours.id }}', '{{ cours.code }}', '')">
+                            <i class="bi bi-plus-circle"></i> Assigner
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+        <p class="text-muted mt-3">Aucun cours trouvé avec ces critères</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal d'assignation -->
+<div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)); color: white;">
+                <h5 class="modal-title">
+                    <i class="bi bi-link-45deg"></i> Assigner un enseignant
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assignForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="modal_cours_id">
+                    <input type="hidden" id="modal_cours_code">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-book"></i> Cours
+                        </label>
+                        <input type="text" id="modal_cours_nom" class="form-control" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person-badge"></i> Sélectionner un enseignant
+                        </label>
+                        <select id="modal_enseignant" class="form-select" required>
+                            <option value="">-- Choisir un enseignant --</option>
+                            {% for enseignant in enseignants %}
+                            <option value="{{ enseignant.id }}">
+                                {{ enseignant.nom_complet }} ({{ enseignant.matricule }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </button>
+                <button type="button" class="btn btn-primary" onclick="assignerEnseignant()">
+                    <i class="bi bi-check-circle"></i> Assigner
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info box -->
+<div class="alert alert-info mt-4">
+    <div class="d-flex align-items-start">
+        <i class="bi bi-info-circle fs-4 me-3"></i>
+        <div>
+            <h6 class="fw-bold mb-2">💡 Comment utiliser cette page ?</h6>
+            <ul class="mb-0 small">
+                <li><strong>Assigner :</strong> Cliquez sur <span class="badge bg-success">Assigner</span> pour attribuer un enseignant à un cours</li>
+                <li><strong>Modifier :</strong> Cliquez sur <span class="badge bg-warning">Modifier</span> pour changer l'enseignant assigné</li>
+                <li><strong>Retirer :</strong> Cliquez sur <span class="badge bg-danger">Retirer</span> pour enlever l'enseignant du cours</li>
+                <li><strong>Filtrer :</strong> Utilisez les filtres en haut pour affiner votre recherche</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Ouvrir le modal d'assignation
+function openModal(coursId, coursCode, enseignantId) {
+    document.getElementById('modal_cours_id').value = coursId;
+    document.getElementById('modal_cours_code').value = coursCode;
+    document.getElementById('modal_cours_nom').value = coursCode;
+    document.getElementById('modal_enseignant').value = enseignantId || '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('assignModal'));
+    modal.show();
+}
+
+// Assigner un enseignant
+function assignerEnseignant() {
+    const coursCode = document.getElementById('modal_cours_code').value;
+    const enseignantId = document.getElementById('modal_enseignant').value;
+    const coursId = document.getElementById('modal_cours_id').value;
+    
+    if (!enseignantId) {
+        alert('⚠️ Veuillez sélectionner un enseignant');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    formData.append('action', 'assigner');
+    formData.append('enseignant_id', enseignantId);
+    
+    fetch(`/cours/assignations/assigner/${coursCode}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Fermer le modal
+            bootstrap.Modal.getInstance(document.getElementById('assignModal')).hide();
+            
+            // Recharger la page avec message de succès
+            window.location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('❌ Une erreur est survenue');
+    });
+}
+
+// Retirer un enseignant
+function retirerEnseignant(coursCode, coursId) {
+    if (!confirm('⚠️ Êtes-vous sûr de vouloir retirer l\'enseignant de ce cours ?')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    formData.append('action', 'retirer');
+    
+    fetch(`/cours/assignations/assigner/${coursCode}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Recharger la page avec message de succès
+            window.location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('❌ Une erreur est survenue');
+    });
+}
+</script>
+
+<style>
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+        color: var(--accent-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        border: 2px solid var(--accent-gold);
+    }
+</style>
+{% endblock %}

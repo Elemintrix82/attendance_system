@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if enseignant %}Modifier{% else %}Créer{% endif %} Enseignant{% endblock %}
+{% block page_title %}{% if enseignant %}Modifier{% else %}Créer un Compte{% endif %} Enseignant{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="table-card">
+            <h4 class="mb-4">
+                <i class="bi bi-person-plus-fill"></i> 
+                {% if enseignant %}
+                Modifier l'enseignant: {{ enseignant.nom_complet }}
+                {% else %}
+                Créer un Compte Enseignant
+                {% endif %}
+            </h4>
+            
+            {% if not enseignant %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> 
+                <strong>Important :</strong> Cette action va créer :
+                <ul class="mb-0 mt-2">
+                    <li>✅ Un compte utilisateur avec accès au système</li>
+                    <li>✅ Un profil enseignant avec permissions limitées</li>
+                    <li>✅ L'enseignant pourra se connecter et gérer SES cours uniquement</li>
+                </ul>
+            </div>
+            {% endif %}
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <!-- Colonne gauche -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3 text-primary">
+                            <i class="bi bi-person-badge"></i> Informations Personnelles
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Matricule <span class="text-danger">*</span></label>
+                            <input type="text" name="matricule" class="form-control" 
+                                   value="{{ enseignant.matricule|default:'' }}" 
+                                   placeholder="Ex: ENS001"
+                                   {% if enseignant %}readonly{% else %}required{% endif %}>
+                            {% if not enseignant %}
+                            <small class="text-muted">⚠️ Servira de nom d'utilisateur pour la connexion</small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nom <span class="text-danger">*</span></label>
+                            <input type="text" name="nom" class="form-control" 
+                                   value="{{ enseignant.nom|default:'' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                            <input type="text" name="prenom" class="form-control" 
+                                   value="{{ enseignant.prenom|default:'' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Sexe</label>
+                            <select name="sexe" class="form-select">
+                                <option value="">-- Choisir --</option>
+                                <option value="M" {% if enseignant.sexe == 'M' %}selected{% endif %}>Masculin</option>
+                                <option value="F" {% if enseignant.sexe == 'F' %}selected{% endif %}>Féminin</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Date de naissance</label>
+                            <input type="date" name="date_naissance" class="form-control" 
+                                   value="{{ enseignant.date_naissance|date:'Y-m-d'|default:'' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Photo</label>
+                            <input type="file" name="photo" class="form-control" accept="image/*">
+                            {% if enseignant.photo %}
+                            <small class="text-muted">Photo actuelle: {{ enseignant.photo.name }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Colonne droite -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3 text-success">
+                            <i class="bi bi-envelope"></i> Contact & Académique
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" 
+                                   value="{{ enseignant.email|default:'' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Téléphone</label>
+                            <input type="tel" name="telephone" class="form-control" 
+                                   placeholder="Ex: 677123456"
+                                   value="{{ enseignant.telephone|default:'' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Spécialité</label>
+                            <input type="text" name="specialite" class="form-control" 
+                                   placeholder="Ex: Mathématiques, Informatique"
+                                   value="{{ enseignant.specialite|default:'' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Grade</label>
+                            <select name="grade" class="form-select">
+                                <option value="">-- Choisir un grade --</option>
+                                {% for value, label in grades %}
+                                <option value="{{ value }}" 
+                                        {% if enseignant.grade == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Date d'embauche</label>
+                            <input type="date" name="date_embauche" class="form-control" 
+                                   value="{{ enseignant.date_embauche|date:'Y-m-d'|default:'' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Adresse</label>
+                            <textarea name="adresse" class="form-control" rows="2">{{ enseignant.adresse|default:'' }}</textarea>
+                        </div>
+                        
+                        {% if not enseignant %}
+                        <!-- Mot de passe - UNIQUEMENT pour création -->
+                        <div class="mb-3">
+                            <h5 class="mb-3 mt-3 text-warning">
+                                <i class="bi bi-key-fill"></i> Accès au Système
+                            </h5>
+                            <label class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                            <input type="password" name="mot_de_passe" class="form-control" 
+                                   minlength="6" required placeholder="Minimum 6 caractères">
+                            <small class="text-muted">
+                                🔐 L'enseignant utilisera ce mot de passe avec son matricule pour se connecter
+                            </small>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <strong><i class="bi bi-shield-check"></i> Permissions accordées :</strong>
+                            <ul class="mb-0 mt-2 small">
+                                <li>✅ Voir uniquement ses cours assignés</li>
+                                <li>✅ Prendre présence pour ses séances</li>
+                                <li>✅ Générer rapports de ses cours</li>
+                                <li>❌ Pas d'accès aux autres données</li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{% if enseignant %}{% url 'detail_enseignant' enseignant.matricule %}{% else %}{% url 'liste_enseignants' %}{% endif %}" 
+                       class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-{% if enseignant %}save{% else %}check-circle{% endif %}"></i> 
+                        {% if enseignant %}Mettre à jour{% else %}Créer le Compte{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

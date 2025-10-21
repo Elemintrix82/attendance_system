@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ etudiant.nom_complet }}{% endblock %}
+{% block page_title %}Détail Étudiant{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="mb-2">
+            <i class="bi bi-person-circle"></i> {{ etudiant.nom_complet }}
+        </h2>
+        <p class="text-muted mb-0">Matricule: {{ etudiant.matricule }}</p>
+    </div>
+    <div>
+        <a href="{% url 'modifier_etudiant' etudiant.matricule %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+        <a href="{% url 'liste_etudiants' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informations personnelles -->
+    <div class="col-md-4">
+        <div class="table-card text-center">
+            {% if etudiant.photo %}
+            <div class="d-flex justify-content-center mb-3">
+                <img src="{{ etudiant.photo.url }}" class="rounded-circle" width="150" height="150" style="object-fit: cover;">
+            </div>
+            {% else %}
+            <div class="d-flex justify-content-center mb-3">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                    style="width: 150px; height: 150px; font-size: 60px;">
+                    {{ etudiant.nom.0 }}{{ etudiant.prenom.0 }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <h4>{{ etudiant.nom_complet }}</h4>
+            <p class="text-muted">{{ etudiant.matricule }}</p>
+            
+            <div class="mb-3">
+                <span class="badge bg-info me-2">{{ etudiant.filiere.code }}</span>
+                <span class="badge bg-secondary">{{ etudiant.niveau.nom }}</span>
+            </div>
+            
+            <hr>
+            
+            <div class="text-start">
+                <p class="mb-2">
+                    <i class="bi bi-envelope"></i> <strong>Email:</strong><br>
+                    {{ etudiant.email|default:"—" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-telephone"></i> <strong>Téléphone:</strong><br>
+                    {{ etudiant.telephone|default:"—" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-calendar"></i> <strong>Date de naissance:</strong><br>
+                    {{ etudiant.date_naissance|date:"d/m/Y"|default:"—" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-geo-alt"></i> <strong>Lieu de naissance:</strong><br>
+                    {{ etudiant.lieu_naissance|default:"—" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-person"></i> <strong>Sexe:</strong><br>
+                    {{ etudiant.get_sexe_display|default:"—" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-calendar-check"></i> <strong>Inscrit le:</strong><br>
+                    {{ etudiant.date_inscription|date:"d/m/Y" }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistiques et présences -->
+    <div class="col-md-8">
+        <!-- Statistiques -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card primary">
+                    <h3>{{ total_seances }}</h3>
+                    <p class="small mb-0">Séances totales</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card success">
+                    <h3>{{ presents }}</h3>
+                    <p class="small mb-0">Présences</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card warning">
+                    <h3>{{ retards }}</h3>
+                    <p class="small mb-0">Retards</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card info">
+                    <h3>{{ taux_presence }}%</h3>
+                    <p class="small mb-0">Assiduité</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Historique des présences -->
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-clock-history"></i> Historique des présences
+            </h5>
+            
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Cours</th>
+                            <th>Type</th>
+                            <th>Statut</th>
+                            <th>Remarque</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for presence in page_obj %}
+                        <tr>
+                            <td>{{ presence.seance.date|date:"d/m/Y" }}</td>
+                            <td>
+                                <strong>{{ presence.seance.cours.code }}</strong><br>
+                                <small class="text-muted">{{ presence.seance.cours.intitule }}</small>
+                            </td>
+                            <td><span class="badge bg-info">{{ presence.seance.get_type_seance_display }}</span></td>
+                            <td>
+                                {% if presence.statut == 'P' %}
+                                <span class="badge badge-present">Présent</span>
+                                {% elif presence.statut == 'A' %}
+                                <span class="badge badge-absent">Absent</span>
+                                {% elif presence.statut == 'R' %}
+                                <span class="badge badge-retard">Retard</span>
+                                {% else %}
+                                <span class="badge badge-justifie">Justifié</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ presence.remarque|default:"—" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Aucune donnée de présence</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav class="mt-3">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

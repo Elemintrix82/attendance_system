@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des Étudiants{% endblock %}
+{% block page_title %}Gestion des Étudiants{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="mb-2">
+            <i class="bi bi-people-fill"></i> Liste des Étudiants
+        </h2>
+        <p class="text-muted mb-0">{{ total_etudiants }} étudiant(s) actif(s)</p>
+    </div>
+    <a href="{% url 'ajouter_etudiant' %}" class="btn btn-primary btn-custom">
+        <i class="bi bi-person-plus"></i> Ajouter un étudiant
+    </a>
+</div>
+
+<!-- Filtres et Recherche -->
+<div class="table-card mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <input type="text" name="search" class="form-control" 
+                   placeholder="Rechercher (matricule, nom, prénom...)" 
+                   value="{{ search_query }}">
+        </div>
+        <div class="col-md-3">
+            <select name="filiere" class="form-select">
+                <option value="">Toutes les filières</option>
+                {% for filiere in filieres %}
+                <option value="{{ filiere.id }}">{{ filiere.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="niveau" class="form-select">
+                <option value="">Tous les niveaux</option>
+                {% for niveau in niveaux %}
+                <option value="{{ niveau.id }}">{{ niveau.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> Rechercher
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Photo</th>
+                    <th>Matricule</th>
+                    <th>Nom Complet</th>
+                    <th>Filière</th>
+                    <th>Niveau</th>
+                    <th>Email</th>
+                    <th>Taux de Présence</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for etudiant in page_obj %}
+                <tr>
+                    <td>
+                        {% if etudiant.photo %}
+                        <img src="{{ etudiant.photo.url }}" alt="{{ etudiant.nom_complet }}" 
+                             class="rounded-circle" width="40" height="40">
+                        {% else %}
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" 
+                             style="width: 40px; height: 40px;">
+                            {{ etudiant.nom.0 }}{{ etudiant.prenom.0 }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ etudiant.matricule }}</strong></td>
+                    <td>{{ etudiant.nom_complet }}</td>
+                    <td><span class="badge bg-info">{{ etudiant.filiere.code }}</span></td>
+                    <td>{{ etudiant.niveau.nom }}</td>
+                    <td>{{ etudiant.email|default:"—" }}</td>
+                    <td>
+                        {% with taux=etudiant.get_taux_presence %}
+                        {% if taux >= 75 %}
+                        <span class="badge badge-present">{{ taux }}%</span>
+                        {% elif taux >= 50 %}
+                        <span class="badge badge-retard">{{ taux }}%</span>
+                        {% else %}
+                        <span class="badge badge-absent">{{ taux }}%</span>
+                        {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        <a href="{% url 'detail_etudiant' etudiant.matricule %}" 
+                           class="btn btn-sm btn-outline-primary" title="Voir détails">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'modifier_etudiant' etudiant.matricule %}" 
+                           class="btn btn-sm btn-outline-warning" title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                        Aucun étudiant trouvé
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

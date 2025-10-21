@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ enseignant.nom_complet }}{% endblock %}
+{% block page_title %}Détail Enseignant{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="mb-2">
+            <i class="bi bi-person-badge"></i> {{ enseignant.nom_complet }}
+        </h2>
+        <p class="text-muted mb-0">Matricule: {{ enseignant.matricule }}</p>
+    </div>
+    <div>
+        <a href="{% url 'modifier_enseignant' enseignant.matricule %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+        <a href="{% url 'liste_enseignants' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informations personnelles -->
+    <div class="col-md-4">
+        <div class="table-card text-center">
+            {% if enseignant.photo %}
+            <div class="d-flex justify-content-center mb-3">
+                <img src="{{ enseignant.photo.url }}" class="rounded-circle" 
+                     width="150" height="150" style="object-fit: cover;">
+            </div>
+            {% else %}
+            <div class="d-flex justify-content-center mb-3">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" 
+                     style="width: 150px; height: 150px; font-size: 60px;">
+                    {{ enseignant.nom.0 }}{{ enseignant.prenom.0 }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <h4>{{ enseignant.nom_complet }}</h4>
+            <p class="text-muted">{{ enseignant.matricule }}</p>
+            
+            <div class="mb-3">
+                {% if enseignant.grade %}
+                <span class="badge bg-success me-2">{{ enseignant.get_grade_display }}</span>
+                {% endif %}
+                {% if enseignant.specialite %}
+                <span class="badge bg-info">{{ enseignant.specialite }}</span>
+                {% endif %}
+            </div>
+            
+            <hr>
+            
+            <div class="text-start">
+                <p class="mb-2">
+                    <i class="bi bi-envelope"></i> <strong>Email:</strong><br>
+                    {{ enseignant.email }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-telephone"></i> <strong>Téléphone:</strong><br>
+                    {{ enseignant.telephone|default:"—" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-calendar"></i> <strong>Date de naissance:</strong><br>
+                    {{ enseignant.date_naissance|date:"d/m/Y"|default:"—" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-person"></i> <strong>Sexe:</strong><br>
+                    {{ enseignant.get_sexe_display|default:"—" }}
+                </p>
+                <p class="mb-2">
+                    <i class="bi bi-calendar-check"></i> <strong>Date d'embauche:</strong><br>
+                    {{ enseignant.date_embauche|date:"d/m/Y"|default:"—" }}
+                </p>
+                {% if enseignant.adresse %}
+                <p class="mb-2">
+                    <i class="bi bi-geo-alt"></i> <strong>Adresse:</strong><br>
+                    {{ enseignant.adresse }}
+                </p>
+                {% endif %}
+            </div>
+            
+            <hr>
+            
+            <!-- Bouton réinitialiser mot de passe -->
+            {% if user.profil.est_admin or user.profil.est_scolarite %}
+            <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                <i class="bi bi-key"></i> Réinitialiser mot de passe
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Cours assignés -->
+    <div class="col-md-8">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-book-half"></i> 
+                Cours Assignés ({{ total_cours }})
+            </h5>
+            
+            {% if cours %}
+            <div class="row">
+                {% for c in cours %}
+                <div class="col-md-6 mb-3">
+                    <div class="card border-success h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <span class="badge bg-primary">{{ c.code }}</span>
+                                {{ c.intitule }}
+                            </h6>
+                            <p class="card-text small text-muted mb-2">
+                                <i class="bi bi-folder"></i> {{ c.filiere.nom }} - {{ c.niveau.nom }}<br>
+                                <i class="bi bi-calendar"></i> Semestre {{ c.semestre }} | {{ c.annee_academique }}<br>
+                                {% if c.jour_semaine %}
+                                <i class="bi bi-clock"></i> {{ c.get_jour_semaine_display }} 
+                                {% if c.heure_debut %}à {{ c.heure_debut }}{% endif %}
+                                {% endif %}
+                            </p>
+                            <div class="d-flex gap-2 mt-3">
+                                <a href="{% url 'detail_cours' c.code %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Voir
+                                </a>
+                                <a href="{% url 'ajouter_seance' c.code %}" class="btn btn-sm btn-success">
+                                    <i class="bi bi-plus-circle"></i> Nouvelle séance
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                <p>Aucun cours assigné pour le moment</p>
+                <a href="{% url 'ajouter_cours' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Assigner un cours
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Statistiques rapides -->
+        {% if cours %}
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="stat-card primary">
+                    <h3>{{ total_cours }}</h3>
+                    <p class="small mb-0">Cours assignés</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card success">
+                    <h3>{{ c.credits|default:0 }}</h3>
+                    <p class="small mb-0">Crédits totaux</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card info">
+                    <h3>{{ c.get_volume_horaire_total|default:0 }}</h3>
+                    <p class="small mb-0">Volume horaire</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal réinitialisation mot de passe -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-key"></i> Réinitialiser le mot de passe
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'reset_password_enseignant' enseignant.matricule %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-muted">
+                        Réinitialiser le mot de passe pour <strong>{{ enseignant.nom_complet }}</strong>
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label">Nouveau mot de passe <span class="text-danger">*</span></label>
+                        <input type="password" name="nouveau_mdp" class="form-control" 
+                               minlength="6" required>
+                        <small class="text-muted">Minimum 6 caractères</small>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        L'enseignant devra utiliser ce nouveau mot de passe pour se connecter.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-check-circle"></i> Réinitialiser
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

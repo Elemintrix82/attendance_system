@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistiques - {{ etudiant.nom_complet }}{% endblock %}
+{% block page_title %}Statistiques Étudiant{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="mb-2">
+            <i class="bi bi-person-circle"></i> {{ etudiant.nom_complet }}
+        </h2>
+        <p class="text-muted mb-0">
+            Matricule: {{ etudiant.matricule }} | 
+            {{ etudiant.filiere.nom }} - {{ etudiant.niveau.nom }}
+        </p>
+    </div>
+    <a href="{% url 'detail_etudiant' etudiant.matricule %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<!-- Statistiques globales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card primary">
+            <h3>{{ total_seances }}</h3>
+            <p class="small mb-0">Total séances</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card success">
+            <h3>{{ presents }}</h3>
+            <p class="small mb-0">Présences</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card warning">
+            <h3>{{ retards }}</h3>
+            <p class="small mb-0">Retards</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card info">
+            <h3>{{ taux_presence }}%</h3>
+            <p class="small mb-0">Assiduité</p>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques par cours -->
+<div class="table-card mb-4">
+    <h5 class="mb-4">
+        <i class="bi bi-book"></i> Statistiques par Cours
+    </h5>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Code</th>
+                    <th>Cours</th>
+                    <th>Total</th>
+                    <th>Présents</th>
+                    <th>Taux</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats_par_cours %}
+                <tr>
+                    <td><span class="badge bg-primary">{{ stat.cours.code }}</span></td>
+                    <td>{{ stat.cours.intitule }}</td>
+                    <td>{{ stat.total }}</td>
+                    <td><span class="badge bg-success">{{ stat.presents }}</span></td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            {% if stat.taux >= 75 %}
+                            <div class="progress-bar bg-success" style="width: {{ stat.taux }}%">
+                                {{ stat.taux }}%
+                            </div>
+                            {% elif stat.taux >= 50 %}
+                            <div class="progress-bar bg-warning" style="width: {{ stat.taux }}%">
+                                {{ stat.taux }}%
+                            </div>
+                            {% else %}
+                            <div class="progress-bar bg-danger" style="width: {{ stat.taux }}%">
+                                {{ stat.taux }}%
+                            </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">Aucune donnée</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Présences récentes -->
+<div class="table-card">
+    <h5 class="mb-4">
+        <i class="bi bi-clock-history"></i> Présences récentes (30 derniers jours)
+    </h5>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Cours</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for presence in presences_recentes %}
+                <tr>
+                    <td>{{ presence.seance.date|date:"d/m/Y" }}</td>
+                    <td>{{ presence.seance.cours.code }}</td>
+                    <td>
+                        {% if presence.statut == 'P' %}
+                        <span class="badge badge-present">Présent</span>
+                        {% elif presence.statut == 'A' %}
+                        <span class="badge badge-absent">Absent</span>
+                        {% elif presence.statut == 'R' %}
+                        <span class="badge badge-retard">Retard</span>
+                        {% else %}
+                        <span class="badge badge-justifie">Justifié</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted">Aucune donnée</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

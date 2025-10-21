@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Tableau de Bord{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="mb-2">
+        <i class="bi bi-house-door"></i> Bienvenue, {{ user.get_full_name|default:user.username }} !
+    </h2>
+    <p class="text-muted mb-0">
+        <i class="bi bi-calendar3"></i> {{ "now"|date:"l d F Y" }}
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="table-card text-center py-5">
+            <i class="bi bi-info-circle text-primary" style="font-size: 4rem;"></i>
+            <h3 class="mt-4">Bienvenue sur le Système de Gestion de Présence</h3>
+            <p class="text-muted mb-4">Polytechnique de Douala</p>
+            
+            <div class="row justify-content-center mt-5">
+                <div class="col-md-8">
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb"></i> 
+                        Votre compte est configuré. Utilisez le menu à gauche pour accéder aux différentes fonctionnalités.
+                    </div>
+                    
+                    <div class="d-flex gap-3 justify-content-center mt-4">
+                        <a href="{% url 'profil' %}" class="btn btn-primary">
+                            <i class="bi bi-person-circle"></i> Voir mon profil
+                        </a>
+                        {% if user.is_staff %}
+                        <a href="/admin/" class="btn btn-secondary">
+                            <i class="bi bi-gear"></i> Administration
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

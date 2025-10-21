@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if etudiant %}Modifier{% else %}Ajouter{% endif %} Étudiant{% endblock %}
+{% block page_title %}{% if etudiant %}Modifier{% else %}Ajouter{% endif %} un Étudiant{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="table-card">
+            <h4 class="mb-4">
+                <i class="bi bi-person-plus"></i> 
+                {% if etudiant %}
+                Modifier l'étudiant: {{ etudiant.nom_complet }}
+                {% else %}
+                Ajouter un nouvel étudiant
+                {% endif %}
+            </h4>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <!-- Informations personnelles -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3 text-primary">
+                            <i class="bi bi-person-fill"></i> Informations personnelles
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Matricule <span class="text-danger">*</span></label>
+                            <input type="text" name="matricule" class="form-control" 
+                                   value="{{ etudiant.matricule|default:'' }}" 
+                                   {% if etudiant %}readonly{% else %}required{% endif %}>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nom <span class="text-danger">*</span></label>
+                            <input type="text" name="nom" class="form-control" 
+                                   value="{{ etudiant.nom|default:'' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                            <input type="text" name="prenom" class="form-control" 
+                                   value="{{ etudiant.prenom|default:'' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Sexe</label>
+                            <select name="sexe" class="form-select">
+                                <option value="">-- Choisir --</option>
+                                <option value="M" {% if etudiant.sexe == 'M' %}selected{% endif %}>Masculin</option>
+                                <option value="F" {% if etudiant.sexe == 'F' %}selected{% endif %}>Féminin</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Date de naissance</label>
+                            <input type="date" name="date_naissance" class="form-control" 
+                                   value="{{ etudiant.date_naissance|date:'Y-m-d'|default:'' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Lieu de naissance</label>
+                            <input type="text" name="lieu_naissance" class="form-control" 
+                                   value="{{ etudiant.lieu_naissance|default:'' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Photo</label>
+                            <input type="file" name="photo" class="form-control" accept="image/*">
+                            {% if etudiant.photo %}
+                            <small class="text-muted">Photo actuelle: {{ etudiant.photo.name }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Informations académiques et contact -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3 text-success">
+                            <i class="bi bi-mortarboard-fill"></i> Informations académiques
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Filière <span class="text-danger">*</span></label>
+                            <select name="filiere" class="form-select" required>
+                                <option value="">-- Choisir une filière --</option>
+                                {% for filiere in filieres %}
+                                <option value="{{ filiere.id }}" 
+                                        {% if etudiant.filiere.id == filiere.id %}selected{% endif %}>
+                                    {{ filiere.code }} - {{ filiere.nom }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Niveau <span class="text-danger">*</span></label>
+                            <select name="niveau" class="form-select" required>
+                                <option value="">-- Choisir un niveau --</option>
+                                {% for niveau in niveaux %}
+                                <option value="{{ niveau.id }}" 
+                                        {% if etudiant.niveau.id == niveau.id %}selected{% endif %}>
+                                    {{ niveau.nom }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <h5 class="mb-3 mt-4 text-info">
+                            <i class="bi bi-envelope-fill"></i> Informations de contact
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" 
+                                   value="{{ etudiant.email|default:'' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Téléphone</label>
+                            <input type="tel" name="telephone" class="form-control" 
+                                   value="{{ etudiant.telephone|default:'' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Adresse</label>
+                            <textarea name="adresse" class="form-control" rows="4">{{ etudiant.adresse|default:'' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{% if etudiant %}{% url 'detail_etudiant' etudiant.matricule %}{% else %}{% url 'liste_etudiants' %}{% endif %}" 
+                       class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> 
+                        {% if etudiant %}Mettre à jour{% else %}Ajouter{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

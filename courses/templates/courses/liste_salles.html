@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des Salles{% endblock %}
+{% block page_title %}Gestion des Salles{% endblock %}
+
+{% block content %}
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="stat-card primary">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-door-open-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ total_salles }}</h3>
+                    <p class="text-muted small mb-0">Salles totales</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="stat-card success">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ salles_disponibles }}</h3>
+                    <p class="text-muted small mb-0">Salles disponibles</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="table-card mb-4">
+    <h5 class="mb-4">
+        <i class="bi bi-funnel-fill"></i> Rechercher une salle
+    </h5>
+    
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <input type="text" 
+                   name="search" 
+                   value="{{ search_query }}"
+                   class="form-control" 
+                   placeholder="🔍 Nom de la salle...">
+        </div>
+        
+        <div class="col-md-3">
+            <select name="type_salle" class="form-select">
+                <option value="">Tous les types</option>
+                {% for code, label in types_salle %}
+                <option value="{{ code }}" {% if type_salle == code %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <select name="batiment" class="form-select">
+                <option value="">Tous les bâtiments</option>
+                {% for bat in batiments %}
+                <option value="{{ bat }}" {% if batiment == bat %}selected{% endif %}>
+                    {{ bat }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> Rechercher
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Liste des salles -->
+<div class="table-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0">
+            <i class="bi bi-list-ul"></i> Liste des salles ({{ page_obj.paginator.count }})
+        </h5>
+        {% if user.profil.est_admin or user.profil.est_scolarite %}
+        <a href="{% url 'admin:courses_salle_add' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Ajouter une salle
+        </a>
+        {% endif %}
+    </div>
+    
+    {% if page_obj %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Type</th>
+                    <th>Bâtiment</th>
+                    <th>Étage</th>
+                    <th>Capacité</th>
+                    <th>Équipements</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for salle in page_obj %}
+                <tr>
+                    <td>
+                        <strong>{{ salle.nom }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">{{ salle.get_type_salle_display }}</span>
+                    </td>
+                    <td>{{ salle.batiment|default:"—" }}</td>
+                    <td class="text-center">
+                        {% if salle.etage %}
+                            Étage {{ salle.etage }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-secondary">{{ salle.capacite }} places</span>
+                    </td>
+                    <td>
+                        <small class="text-muted">
+                            {{ salle.equipements|truncatewords:5|default:"—" }}
+                        </small>
+                    </td>
+                    <td>
+                        {% if salle.disponible %}
+                        <span class="badge bg-success">Disponible</span>
+                        {% else %}
+                        <span class="badge bg-danger">Occupée</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&type_salle={{ type_salle }}&batiment={{ batiment }}">
+                    Précédent
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&type_salle={{ type_salle }}&batiment={{ batiment }}">
+                    Suivant
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+        <p class="text-muted mt-3">Aucune salle trouvée</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

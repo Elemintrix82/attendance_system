@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistiques par Classe{% endblock %}
+{% block page_title %}Statistiques par Classe{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-bar-chart-line"></i> Statistiques de Présence par Classe</h2>
+</div>
+
+<div class="table-card mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-5">
+            <label class="form-label">Filière <span class="text-danger">*</span></label>
+            <select name="filiere" class="form-select" required>
+                <option value="">-- Choisir une filière --</option>
+                {% for filiere in filieres %}
+                <option value="{{ filiere.id }}" 
+                        {% if filiere_selectionnee == filiere.id|stringformat:"s" %}selected{% endif %}>
+                    {{ filiere.nom }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label">Niveau <span class="text-danger">*</span></label>
+            <select name="niveau" class="form-select" required>
+                <option value="">-- Choisir un niveau --</option>
+                {% for niveau in niveaux %}
+                <option value="{{ niveau.id }}" 
+                        {% if niveau_selectionne == niveau.id|stringformat:"s" %}selected{% endif %}>
+                    {{ niveau.nom }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> Afficher
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if stats %}
+<div class="table-card">
+    <h5 class="mb-4">Résultats</h5>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Matricule</th>
+                    <th>Nom</th>
+                    <th>Total Séances</th>
+                    <th>Présents</th>
+                    <th>Absents</th>
+                    <th>Retards</th>
+                    <th>Taux de Présence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats %}
+                <tr>
+                    <td><strong>{{ stat.etudiant.matricule }}</strong></td>
+                    <td>
+                        <a href="{% url 'statistiques_par_etudiant' stat.etudiant.matricule %}">
+                            {{ stat.etudiant.nom_complet }}
+                        </a>
+                    </td>
+                    <td><span class="badge bg-secondary">{{ stat.total_seances }}</span></td>
+                    <td><span class="badge bg-success">{{ stat.presents }}</span></td>
+                    <td><span class="badge bg-danger">{{ stat.absents }}</span></td>
+                    <td><span class="badge bg-warning">{{ stat.retards }}</span></td>
+                    <td>
+                        <div class="progress" style="height: 25px;">
+                            {% if stat.taux_presence >= 75 %}
+                            <div class="progress-bar bg-success" style="width: {{ stat.taux_presence }}%">
+                                {{ stat.taux_presence }}%
+                            </div>
+                            {% elif stat.taux_presence >= 50 %}
+                            <div class="progress-bar bg-warning" style="width: {{ stat.taux_presence }}%">
+                                {{ stat.taux_presence }}%
+                            </div>
+                            {% else %}
+                            <div class="progress-bar bg-danger" style="width: {{ stat.taux_presence }}%">
+                                {{ stat.taux_presence }}%
+                            </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">Aucune donnée</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info text-center">
+    <i class="bi bi-info-circle fs-1 d-block mb-3"></i>
+    <p>Sélectionnez une filière et un niveau pour afficher les statistiques</p>
+</div>
+{% endif %}
+{% endblock %}
