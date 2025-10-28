@@ -373,46 +373,75 @@
         <!-- Logo -->
         <div class="logo-section">
             <img src="{% static 'images/logo.png' %}" alt="Polytechnique Douala">
-            <h4>Polytechnique Douala</h4>
+            <h4>École Normale Supérieure De Polytechnique De Douala</h4>
             <p>SYSTÈME DE PRÉSENCE</p>
+            <p>Departement GIT</p>
         </div>
         
         <!-- Navigation -->
-        <nav class="nav flex-column">
+        <nav>
             <!-- Dashboard -->
             <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
                href="{% url 'dashboard' %}">
                 <i class="bi bi-speedometer2 icon"></i>
-                <span>Dashboard</span>
+                <span>Tableau de Bord</span>
             </a>
             
             {% if user.profil.est_admin or user.profil.est_scolarite %}
-            <!-- ========== MENU ADMIN / SCOLARITÉ ========== -->
+            <!-- ========== MENU ADMIN/SCOLARITÉ ========== -->
             
-            <!-- Gestion Académique -->
+            <!-- Gestion des Étudiants (Admin/Scolarité) -->
             <div class="menu-dropdown">
-                <div class="menu-dropdown-toggle" onclick="toggleMenu('academique')">
+                <div class="menu-dropdown-toggle" onclick="toggleMenu('etudiants')">
                     <div class="d-flex align-items-center gap-3">
-                        <i class="bi bi-mortarboard-fill icon"></i>
-                        <span>Gestion Académique</span>
+                        <i class="bi bi-people-fill icon"></i>
+                        <span>Gestion Étudiants</span>
                     </div>
                     <i class="bi bi-chevron-down arrow"></i>
                 </div>
-                <div class="submenu" id="menu-academique">
-                    <a class="nav-link {% if 'etudiants' in request.path %}active{% endif %}" 
+                <div class="submenu" id="menu-etudiants">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'liste_etudiants' %}active{% endif %}" 
                        href="{% url 'liste_etudiants' %}">
-                        <i class="bi bi-people"></i>
-                        <span>Étudiants</span>
+                        <i class="bi bi-list-ul"></i>
+                        <span>Liste des Étudiants</span>
                     </a>
-                    <a class="nav-link {% if 'enseignants' in request.path %}active{% endif %}" 
-                       href="{% url 'liste_enseignants' %}">
-                        <i class="bi bi-person-badge"></i>
-                        <span>Enseignants</span>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'ajouter_etudiant' %}active{% endif %}" 
+                       href="{% url 'ajouter_etudiant' %}">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Ajouter un Étudiant</span>
                     </a>
-                    <a class="nav-link {% if 'filieres' in request.path %}active{% endif %}" 
+                    <a class="nav-link {% if request.resolver_match.url_name == 'liste_filieres' %}active{% endif %}" 
                        href="{% url 'liste_filieres' %}">
                         <i class="bi bi-diagram-3"></i>
                         <span>Filières</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Gestion des Enseignants (Admin/Scolarité) -->
+            <div class="menu-dropdown">
+                <div class="menu-dropdown-toggle" onclick="toggleMenu('enseignants')">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-person-badge-fill icon"></i>
+                        <span>Gestion Enseignants</span>
+                    </div>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </div>
+                <div class="submenu" id="menu-enseignants">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'liste_enseignants' %}active{% endif %}" 
+                       href="{% url 'liste_enseignants' %}">
+                        <i class="bi bi-list-ul"></i>
+                        <span>Liste des Enseignants</span>
+                    </a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'ajouter_enseignant' %}active{% endif %}" 
+                       href="{% url 'ajouter_enseignant' %}">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Ajouter un Enseignant</span>
+                    </a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'liste_salles' %}active{% endif %}" 
+                       href="{% url 'liste_salles' %}">
+                        <i class="bi bi-door-open"></i>
+                        <span>Salles</span>
                     </a>
                 </div>
             </div>
@@ -428,22 +457,18 @@
                 </div>
                 <div class="submenu" id="menu-cours">
                     <a class="nav-link {% if request.resolver_match.url_name == 'liste_cours' %}active{% endif %}" 
-                       href="{% url 'liste_cours' %}">
+                    href="{% url 'liste_cours' %}">
                         <i class="bi bi-list-ul"></i>
                         <span>Liste des Cours</span>
                     </a>
-                    <a class="nav-link {% if 'salles' in request.path %}active{% endif %}" 
-                       href="{% url 'liste_salles' %}">
-                        <i class="bi bi-door-open"></i>
-                        <span>Salles</span>
-                    </a>
+                    
                     <a class="nav-link {% if 'seances' in request.path %}active{% endif %}" 
-                       href="{% url 'liste_seances' %}">
+                    href="{% url 'liste_seances' %}">
                         <i class="bi bi-calendar-event"></i>
                         <span>Séances</span>
                     </a>
                     <a class="nav-link {% if 'assignations' in request.path %}active{% endif %}" 
-                       href="{% url 'gerer_assignations' %}">
+                    href="{% url 'gerer_assignations' %}">
                         <i class="bi bi-link-45deg"></i>
                         <span>⭐ Assignations</span>
                     </a>
@@ -460,10 +485,20 @@
                     <i class="bi bi-chevron-down arrow"></i>
                 </div>
                 <div class="submenu" id="menu-presences">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'navigation_presences' %}active{% endif %}" 
+                       href="{% url 'navigation_presences' %}">
+                        <i class="bi bi-funnel-fill"></i>
+                        <span>Navigation par Filière</span>
+                    </a>
                     <a class="nav-link {% if request.resolver_match.url_name == 'liste_presences' %}active{% endif %}" 
                        href="{% url 'liste_presences' %}">
                         <i class="bi bi-list-check"></i>
-                        <span>Liste Présences</span>
+                        <span>Toutes les Présences</span>
+                    </a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'liste_justificatifs' %}active{% endif %}" 
+                       href="{% url 'liste_justificatifs' %}">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Justificatifs</span>
                     </a>
                 </div>
             </div>
@@ -479,12 +514,12 @@
                 </div>
                 <div class="submenu" id="menu-stats">
                     <a class="nav-link {% if request.resolver_match.url_name == 'statistiques_globales' %}active{% endif %}" 
-                       href="{% url 'statistiques_globales' %}">
+                    href="{% url 'statistiques_globales' %}">
                         <i class="bi bi-pie-chart"></i>
                         <span>Vue Globale</span>
                     </a>
                     <a class="nav-link {% if 'par-classe' in request.path %}active{% endif %}" 
-                       href="{% url 'statistiques_par_classe' %}">
+                    href="{% url 'statistiques_par_classe' %}">
                         <i class="bi bi-bar-chart"></i>
                         <span>Par Classe</span>
                     </a>
@@ -496,24 +531,40 @@
             
             <!-- Mes Cours -->
             <a class="nav-link {% if request.resolver_match.url_name == 'liste_cours' %}active{% endif %}" 
-               href="{% url 'liste_cours' %}">
+            href="{% url 'liste_cours' %}">
                 <i class="bi bi-book-fill icon"></i>
                 <span>Mes Cours</span>
             </a>
             
             <!-- Mes Séances -->
             <a class="nav-link {% if 'seances' in request.path %}active{% endif %}" 
-               href="{% url 'liste_seances' %}">
+            href="{% url 'liste_seances' %}">
                 <i class="bi bi-calendar-event icon"></i>
                 <span>Mes Séances</span>
             </a>
             
             <!-- Prendre Présence -->
-            <a class="nav-link {% if 'presences' in request.path %}active{% endif %}" 
-               href="{% url 'liste_presences' %}">
-                <i class="bi bi-check2-square icon"></i>
-                <span>Prendre Présence</span>
-            </a>
+            <div class="menu-dropdown">
+                <div class="menu-dropdown-toggle" onclick="toggleMenu('presences')">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-check2-square icon"></i>
+                        <span>Présences</span>
+                    </div>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </div>
+                <div class="submenu" id="menu-presences">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'navigation_presences' %}active{% endif %}" 
+                       href="{% url 'navigation_presences' %}">
+                        <i class="bi bi-funnel-fill"></i>
+                        <span>Navigation</span>
+                    </a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'liste_presences' %}active{% endif %}" 
+                       href="{% url 'liste_presences' %}">
+                        <i class="bi bi-list-check"></i>
+                        <span>Mes Présences</span>
+                    </a>
+                </div>
+            </div>
             
             {% endif %}
             
@@ -521,7 +572,7 @@
             
             <!-- Mon Profil -->
             <a class="nav-link {% if 'profil' in request.path %}active{% endif %}" 
-               href="{% url 'profil' %}">
+            href="{% url 'profil' %}">
                 <i class="bi bi-person-circle icon"></i>
                 <span>Mon Profil</span>
             </a>

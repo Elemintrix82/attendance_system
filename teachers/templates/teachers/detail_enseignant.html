@@ -12,9 +12,18 @@
         <p class="text-muted mb-0">Matricule: {{ enseignant.matricule }}</p>
     </div>
     <div>
-        <a href="{% url 'modifier_enseignant' enseignant.matricule %}" class="btn btn-warning">
+        {% if user.profil.est_admin or user.profil.est_scolarite %}
+        <a href="{% url 'modifier_enseignant' enseignant.matricule %}" class="btn btn-warning me-2">
             <i class="bi bi-pencil"></i> Modifier
         </a>
+        {% endif %}
+        
+        {% if user.profil.est_admin %}
+        <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#deleteEnseignantModal">
+            <i class="bi bi-trash"></i> Supprimer
+        </button>
+        {% endif %}
+        
         <a href="{% url 'liste_enseignants' %}" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Retour
         </a>
@@ -32,8 +41,8 @@
             </div>
             {% else %}
             <div class="d-flex justify-content-center mb-3">
-                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" 
-                     style="width: 150px; height: 150px; font-size: 60px;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                     style="width: 150px; height: 150px; font-size: 60px; background: linear-gradient(135deg, #28a745, #20c997); color: white; font-weight: bold;">
                     {{ enseignant.nom.0 }}{{ enseignant.prenom.0 }}
                 </div>
             </div>
@@ -86,7 +95,7 @@
             
             <!-- Bouton réinitialiser mot de passe -->
             {% if user.profil.est_admin or user.profil.est_scolarite %}
-            <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+            <button type="button" class="btn btn-outline-warning w-100 mb-2" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
                 <i class="bi bi-key"></i> Réinitialiser mot de passe
             </button>
             {% endif %}
@@ -105,18 +114,18 @@
             <div class="row">
                 {% for c in cours %}
                 <div class="col-md-6 mb-3">
-                    <div class="card border-success h-100">
+                    <div class="card h-100" style="border-left: 4px solid #28a745;">
                         <div class="card-body">
                             <h6 class="card-title">
                                 <span class="badge bg-primary">{{ c.code }}</span>
                                 {{ c.intitule }}
                             </h6>
                             <p class="card-text small text-muted mb-2">
-                                <i class="bi bi-folder"></i> {{ c.filiere.nom }} - {{ c.niveau.nom }}<br>
+                                <i class="bi bi-diagram-3"></i> {{ c.filiere.nom_complet }}<br>
                                 <i class="bi bi-calendar"></i> Semestre {{ c.semestre }} | {{ c.annee_academique }}<br>
                                 {% if c.jour_semaine %}
                                 <i class="bi bi-clock"></i> {{ c.get_jour_semaine_display }} 
-                                {% if c.heure_debut %}à {{ c.heure_debut }}{% endif %}
+                                {% if c.heure_debut %}à {{ c.heure_debut|time:"H:i" }}{% endif %}
                                 {% endif %}
                             </p>
                             <div class="d-flex gap-2 mt-3">
@@ -136,9 +145,11 @@
             <div class="text-center text-muted py-5">
                 <i class="bi bi-inbox fs-1 d-block mb-3"></i>
                 <p>Aucun cours assigné pour le moment</p>
-                <a href="{% url 'ajouter_cours' %}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Assigner un cours
+                {% if user.profil.est_admin or user.profil.est_scolarite %}
+                <a href="{% url 'assigner_cours' enseignant.matricule %}" class="btn btn-primary">
+                    <i class="bi bi-link-45deg"></i> Assigner des cours
                 </a>
+                {% endif %}
             </div>
             {% endif %}
         </div>
@@ -154,14 +165,14 @@
             </div>
             <div class="col-md-4">
                 <div class="stat-card success">
-                    <h3>{{ c.credits|default:0 }}</h3>
-                    <p class="small mb-0">Crédits totaux</p>
+                    <h3>{{ cours.0.credits|default:0 }}</h3>
+                    <p class="small mb-0">Crédits (exemple)</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stat-card info">
-                    <h3>{{ c.get_volume_horaire_total|default:0 }}</h3>
-                    <p class="small mb-0">Volume horaire</p>
+                    <h3>{{ cours.0.get_volume_horaire_total|default:0 }}h</h3>
+                    <p class="small mb-0">Volume horaire (exemple)</p>
                 </div>
             </div>
         </div>
@@ -198,7 +209,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-warning">
                         <i class="bi bi-check-circle"></i> Réinitialiser
                     </button>
                 </div>
@@ -206,4 +217,61 @@
         </div>
     </div>
 </div>
+
+<!-- Modal suppression enseignant -->
+{% if user.profil.est_admin %}
+<div class="modal fade" id="deleteEnseignantModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-danger"></i> Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer cet enseignant ?</p>
+                <div class="alert alert-warning">
+                    <div class="d-flex align-items-center">
+                        {% if enseignant.photo %}
+                        <img src="{{ enseignant.photo.url }}" class="rounded-circle me-3" 
+                             width="60" height="60" style="object-fit: cover;">
+                        {% else %}
+                        <div class="rounded-circle me-3 d-flex align-items-center justify-content-center" 
+                             style="width: 60px; height: 60px; background: #28a745; color: white; font-weight: bold; font-size: 1.5rem;">
+                            {{ enseignant.nom.0 }}{{ enseignant.prenom.0 }}
+                        </div>
+                        {% endif %}
+                        <div>
+                            <strong class="d-block">{{ enseignant.nom_complet }}</strong>
+                            <small class="text-muted">{{ enseignant.matricule }} - {{ enseignant.get_grade_display|default:"Aucun grade" }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Attention :</strong> Cette action est irréversible !
+                    <ul class="mb-0 mt-2">
+                        <li>Le compte utilisateur sera supprimé</li>
+                        <li>{{ enseignant.get_nombre_cours }} cours assigné(s) seront désassignés</li>
+                        <li>Toutes les données liées seront perdues</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </button>
+                <form method="post" action="{% url 'supprimer_enseignant' enseignant.matricule %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Supprimer définitivement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}

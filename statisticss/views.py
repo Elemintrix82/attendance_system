@@ -1,10 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Q, Avg
 from django.http import HttpResponse
 from datetime import datetime, timedelta
-from students.models import Etudiant, Filiere, Niveau
+from students.models import Etudiant, Filiere  # ✅ Suppression de Niveau
 from courses.models import Cours, SeanceCours
 from attendance.models import Presence
 from .models import RapportPresence
@@ -27,9 +27,9 @@ def statistiques_globales(request):
     else:
         taux_presence_global = 0
     
-    # Statistiques par filière
+    # Statistiques par filière (regroupées par spécialité + formation + niveau)
     stats_filieres = []
-    for filiere in Filiere.objects.all():
+    for filiere in Filiere.objects.filter(actif=True):
         etudiants_filiere = Etudiant.objects.filter(filiere=filiere, actif=True)
         presences_filiere = Presence.objects.filter(etudiant__in=etudiants_filiere)
         
@@ -46,24 +46,7 @@ def statistiques_globales(request):
             'taux_presence': taux,
         })
     
-    # Statistiques par niveau
-    stats_niveaux = []
-    for niveau in Niveau.objects.all():
-        etudiants_niveau = Etudiant.objects.filter(niveau=niveau, actif=True)
-        presences_niveau = Presence.objects.filter(etudiant__in=etudiants_niveau)
-        
-        total = presences_niveau.count()
-        if total > 0:
-            presents = presences_niveau.filter(statut__in=['P', 'R', 'J']).count()
-            taux = round((presents / total) * 100, 2)
-        else:
-            taux = 0
-        
-        stats_niveaux.append({
-            'niveau': niveau,
-            'nb_etudiants': etudiants_niveau.count(),
-            'taux_presence': taux,
-        })
+    # ❌ SUPPRIMÉ : stats_niveaux (maintenant intégré dans stats_filieres)
     
     context = {
         'total_etudiants': total_etudiants,
@@ -72,7 +55,6 @@ def statistiques_globales(request):
         'total_presences': total_presences,
         'taux_presence_global': taux_presence_global,
         'stats_filieres': stats_filieres,
-        'stats_niveaux': stats_niveaux,
     }
     
     return render(request, 'statisticss/statistiques_globales.html', context)
@@ -80,18 +62,16 @@ def statistiques_globales(request):
 
 @login_required
 def statistiques_par_classe(request):
-    """Statistiques de présence par classe (filière + niveau)"""
+    """Statistiques de présence par classe (filière complète)"""
     
     filiere_id = request.GET.get('filiere')
-    niveau_id = request.GET.get('niveau')
     
     stats = []
     
-    if filiere_id and niveau_id:
-        # Filtrer par filière et niveau spécifiques
+    if filiere_id:
+        # Filtrer par filière spécifique
         etudiants = Etudiant.objects.filter(
             filiere_id=filiere_id,
-            niveau_id=niveau_id,
             actif=True
         )
         
@@ -119,10 +99,8 @@ def statistiques_par_classe(request):
     
     context = {
         'stats': stats,
-        'filieres': Filiere.objects.all(),
-        'niveaux': Niveau.objects.all(),
+        'filieres': Filiere.objects.filter(actif=True),
         'filiere_selectionnee': filiere_id,
-        'niveau_selectionne': niveau_id,
     }
     
     return render(request, 'statisticss/statistiques_par_classe.html', context)
@@ -131,7 +109,7 @@ def statistiques_par_classe(request):
 @login_required
 def statistiques_par_etudiant(request, matricule):
     """Statistiques détaillées d'un étudiant"""
-    etudiant = Etudiant.objects.get(matricule=matricule)
+    etudiant = get_object_or_404(Etudiant, matricule=matricule)
     
     # Toutes les présences de l'étudiant
     presences = Presence.objects.filter(etudiant=etudiant).select_related('seance__cours')
@@ -148,7 +126,6 @@ def statistiques_par_etudiant(request, matricule):
     stats_par_cours = []
     cours_suivis = Cours.objects.filter(
         filiere=etudiant.filiere,
-        niveau=etudiant.niveau,
         actif=True
     )
     
@@ -192,7 +169,7 @@ def statistiques_par_etudiant(request, matricule):
 @login_required
 def statistiques_par_cours(request, code_cours):
     """Statistiques de présence pour un cours"""
-    cours = Cours.objects.get(code=code_cours)
+    cours = get_object_or_404(Cours, code=code_cours)
     
     # Toutes les séances du cours
     seances = SeanceCours.objects.filter(cours=cours, presente=True).order_by('-date')
@@ -268,10 +245,7 @@ def generer_rapport(request):
             if filiere_id:
                 rapport.filiere = Filiere.objects.get(id=filiere_id)
         
-        elif type_rapport == 'NIVEAU':
-            niveau_id = request.POST.get('niveau')
-            if niveau_id:
-                rapport.niveau = Niveau.objects.get(id=niveau_id)
+        # ❌ SUPPRIMÉ : type_rapport == 'NIVEAU'
         
         # Dates
         date_debut = request.POST.get('date_debut')
@@ -292,8 +266,7 @@ def generer_rapport(request):
         'formats': RapportPresence.FORMAT_RAPPORT,
         'etudiants': Etudiant.objects.filter(actif=True),
         'cours': Cours.objects.filter(actif=True),
-        'filieres': Filiere.objects.all(),
-        'niveaux': Niveau.objects.all(),
+        'filieres': Filiere.objects.filter(actif=True),
     }
     
     return render(request, 'statisticss/generer_rapport.html', context)

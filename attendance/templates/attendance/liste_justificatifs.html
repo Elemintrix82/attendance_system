@@ -1,0 +1,396 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des Justificatifs{% endblock %}
+{% block page_title %}Justificatifs d'Absence{% endblock %}
+
+{% block content %}
+<!-- En-tête -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-file-earmark-text"></i> Liste des Justificatifs
+            </h2>
+            <p class="text-muted mb-0">
+                {% if page_obj.paginator.count > 0 %}
+                    {{ page_obj.paginator.count }} justificatif(s) enregistré(s)
+                {% else %}
+                    Aucun justificatif pour le moment
+                {% endif %}
+            </p>
+        </div>
+        
+        <!-- 🆕 Bouton pour ajouter un justificatif -->
+        {% if user.profil.est_admin or user.profil.est_scolarite %}
+        <div>
+            <a href="{% url 'liste_etudiants' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Ajouter un Justificatif
+            </a>
+            <small class="d-block text-muted mt-1">
+                Sélectionnez d'abord un étudiant
+            </small>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 🆕 Message si aucun justificatif n'existe -->
+{% if page_obj.paginator.count == 0 and not request.GET.statut and not request.GET.type and not request.GET.search %}
+<div class="alert alert-info text-center py-5">
+    <i class="bi bi-inbox" style="font-size: 4rem; opacity: 0.5;"></i>
+    <h4 class="mt-3">Aucun justificatif enregistré</h4>
+    <p class="text-muted mb-4">
+        Les justificatifs d'absence soumis par les étudiants apparaîtront ici.
+    </p>
+    {% if user.profil.est_admin or user.profil.est_scolarite %}
+    <a href="{% url 'liste_etudiants' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Ajouter le premier justificatif
+    </a>
+    {% endif %}
+</div>
+{% else %}
+
+<!-- Filtres -->
+<div class="table-card mb-4">
+    <h5 class="mb-3">
+        <i class="bi bi-funnel-fill"></i> Filtres de recherche
+    </h5>
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Statut de validation</label>
+            <select name="statut" class="form-select">
+                <option value="">Tous</option>
+                <option value="valide" {% if request.GET.statut == 'valide' %}selected{% endif %}>
+                    ✅ Validé
+                </option>
+                <option value="non_valide" {% if request.GET.statut == 'non_valide' %}selected{% endif %}>
+                    ⏳ En attente
+                </option>
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <label class="form-label">Type de justificatif</label>
+            <select name="type" class="form-select">
+                <option value="">Tous les types</option>
+                {% for value, label in types %}
+                <option value="{{ value }}" {% if request.GET.type == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-4">
+            <label class="form-label">Rechercher étudiant</label>
+            <input type="text" name="search" class="form-control" 
+                   placeholder="Matricule, nom, prénom..." 
+                   value="{{ request.GET.search }}">
+        </div>
+        
+        <div class="col-md-2 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-primary flex-fill">
+                <i class="bi bi-search"></i> Filtrer
+            </button>
+            {% if request.GET.statut or request.GET.type or request.GET.search %}
+            <a href="{% url 'liste_justificatifs' %}" class="btn btn-outline-secondary" title="Réinitialiser">
+                <i class="bi bi-x-circle"></i>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card info">
+            <div class="stat-icon">
+                <i class="bi bi-folder"></i>
+            </div>
+            <h3>{{ total_justificatifs|default:page_obj.paginator.count }}</h3>
+            <p class="small mb-0">Total justificatifs</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card success">
+            <div class="stat-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <h3>{{ validated_count|default:0 }}</h3>
+            <p class="small mb-0">Validés</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card warning">
+            <div class="stat-icon">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <h3>{{ pending_count|default:0 }}</h3>
+            <p class="small mb-0">En attente</p>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau des justificatifs -->
+<div class="table-card">
+    {% if page_obj.paginator.count > 0 %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th width="15%">Étudiant</th>
+                    <th width="12%">Type</th>
+                    <th width="20%">Motif</th>
+                    <th width="15%">Période</th>
+                    <th width="8%">Durée</th>
+                    <th width="12%">Statut</th>
+                    <th width="10%">Soumis le</th>
+                    <th width="8%">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for justificatif in page_obj %}
+                <tr>
+                    <td>
+                        <div>
+                            <strong class="text-primary">{{ justificatif.etudiant.matricule }}</strong><br>
+                            <small class="text-muted">{{ justificatif.etudiant.nom_complet }}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">
+                            {% if justificatif.type_justificatif == 'MEDICAL' %}🏥
+                            {% elif justificatif.type_justificatif == 'FAMILLE' %}👨‍👩‍👧
+                            {% elif justificatif.type_justificatif == 'ADMIN' %}📋
+                            {% elif justificatif.type_justificatif == 'STAGE' %}🎓
+                            {% else %}📝{% endif %}
+                            {{ justificatif.get_type_justificatif_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <small class="text-truncate d-block" style="max-width: 200px;" title="{{ justificatif.motif }}">
+                            {{ justificatif.motif|truncatewords:6 }}
+                        </small>
+                    </td>
+                    <td>
+                        <small>
+                            <i class="bi bi-calendar3"></i> 
+                            {{ justificatif.date_debut|date:"d/m/Y" }}
+                            {% if justificatif.date_fin %}
+                            <br>→ {{ justificatif.date_fin|date:"d/m/Y" }}
+                            {% endif %}
+                        </small>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">
+                            {{ justificatif.nombre_jours }} 
+                            {% if justificatif.nombre_jours > 1 %}jours{% else %}jour{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if justificatif.valide %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle-fill"></i> Validé
+                        </span>
+                        <br>
+                        <small class="text-muted">
+                            par {{ justificatif.valide_par.get_full_name|default:justificatif.valide_par.username }}
+                        </small>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-clock-fill"></i> En attente
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small class="text-muted">
+                            {{ justificatif.date_soumission|date:"d/m/Y" }}<br>
+                            <span class="text-muted">{{ justificatif.date_soumission|date:"H:i" }}</span>
+                        </small>
+                    </td>
+                    <td>
+                        <div class="btn-group-vertical gap-1">
+                            <a href="{% url 'detail_justificatif' justificatif.id %}" 
+                               class="btn btn-sm btn-outline-primary"
+                               data-bs-toggle="tooltip"
+                               title="Voir les détails">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            
+                            {% if user.profil.est_admin or user.profil.est_scolarite %}
+                                {% if not justificatif.valide %}
+                                <a href="{% url 'valider_justificatif' justificatif.id %}" 
+                                   class="btn btn-sm btn-outline-success"
+                                   data-bs-toggle="tooltip"
+                                   title="Valider ce justificatif">
+                                    <i class="bi bi-check2"></i>
+                                </a>
+                                {% else %}
+                                <a href="{% url 'refuser_justificatif' justificatif.id %}" 
+                                   class="btn btn-sm btn-outline-danger"
+                                   data-bs-toggle="tooltip"
+                                   title="Invalider ce justificatif">
+                                    <i class="bi bi-x-circle"></i>
+                                </a>
+                                {% endif %}
+                            {% endif %}
+
+                            <a href="{% url 'modifier_justificatif' justificatif.id %}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>
+                            <button onclick="supprimer({{ justificatif.id }})" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i> Précédent
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">
+                    Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    Suivant <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <!-- Message si aucun résultat après filtrage -->
+    <div class="text-center py-5">
+        <i class="bi bi-search text-muted" style="font-size: 3rem; opacity: 0.5;"></i>
+        <h5 class="mt-3 text-muted">Aucun justificatif trouvé</h5>
+        <p class="text-muted">
+            Essayez de modifier vos critères de recherche
+        </p>
+        <a href="{% url 'liste_justificatifs' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser les filtres
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% endif %}
+
+<style>
+    .stat-card {
+        border-radius: 15px;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: rgba(255,255,255,0.1);
+        transform: rotate(45deg);
+    }
+    
+    .stat-card.info { 
+        background: linear-gradient(135deg, #3b82f6, #2563eb); 
+    }
+    .stat-card.success { 
+        background: linear-gradient(135deg, #10b981, #059669); 
+    }
+    .stat-card.warning { 
+        background: linear-gradient(135deg, #f59e0b, #d97706); 
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        opacity: 0.8;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card h3 {
+        font-size: 2.8rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .stat-card p {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .table-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-group-vertical {
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+
+<script>
+// Activer les tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+
+<script>
+function supprimer(id) {
+    if (confirm('Supprimer ce justificatif ?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/presences/justificatifs/${id}/supprimer/`;
+        form.innerHTML = '{% csrf_token %}';
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

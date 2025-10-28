@@ -11,20 +11,28 @@
         </h2>
         <p class="text-muted mb-0">{{ total_enseignants }} enseignant(s) actif(s)</p>
     </div>
-    <a href="{% url 'ajouter_enseignant' %}" class="btn btn-primary btn-custom">
+    {% if user.profil.est_admin or user.profil.est_scolarite %}
+    <a href="{% url 'ajouter_enseignant' %}" class="btn btn-primary">
         <i class="bi bi-person-plus"></i> Créer un Enseignant
     </a>
+    {% endif %}
 </div>
 
 <!-- Filtres et Recherche -->
 <div class="table-card mb-4">
+    <h5 class="mb-4">
+        <i class="bi bi-funnel-fill"></i> Filtres de recherche
+    </h5>
+    
     <form method="get" class="row g-3">
         <div class="col-md-6">
+            <label class="form-label">Rechercher</label>
             <input type="text" name="search" class="form-control" 
-                   placeholder="Rechercher (matricule, nom, email, spécialité...)" 
+                   placeholder="Matricule, nom, email, spécialité..." 
                    value="{{ search_query }}">
         </div>
         <div class="col-md-4">
+            <label class="form-label">Grade</label>
             <select name="grade" class="form-select">
                 <option value="">Tous les grades</option>
                 {% for value, label in grades %}
@@ -33,6 +41,7 @@
             </select>
         </div>
         <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
             <button type="submit" class="btn btn-primary w-100">
                 <i class="bi bi-search"></i> Rechercher
             </button>
@@ -44,17 +53,16 @@
 <div class="table-card">
     <div class="table-responsive">
         <table class="table table-hover align-middle">
-            <thead class="table-light">
+            <thead>
                 <tr>
-                    <th>Photo</th>
-                    <th>Matricule</th>
-                    <th>Nom Complet</th>
-                    <th>Grade</th>
-                    <th>Spécialité</th>
-                    <th>Email</th>
-                    <th>Téléphone</th>
-                    <th>Nb Cours</th>
-                    <th>Actions</th>
+                    <th width="8%">Photo</th>
+                    <th width="12%">Matricule</th>
+                    <th width="18%">Nom Complet</th>
+                    <th width="12%">Grade</th>
+                    <th width="15%">Spécialité</th>
+                    <th width="15%">Email</th>
+                    <th width="10%">Nb Cours</th>
+                    <th width="10%" class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -62,21 +70,19 @@
                 <tr>
                     <td>
                         {% if enseignant.photo %}
-                        <div class="d-flex justify-content-center">
-                            <img src="{{ enseignant.photo.url }}" class="rounded-circle" 
-                                 width="40" height="40" style="object-fit: cover;">
-                        </div>
+                        <img src="{{ enseignant.photo.url }}" class="rounded-circle" 
+                             width="45" height="45" style="object-fit: cover;">
                         {% else %}
-                        <div class="d-flex justify-content-center">
-                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" 
-                                 style="width: 40px; height: 40px;">
-                                {{ enseignant.nom.0 }}{{ enseignant.prenom.0 }}
-                            </div>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                             style="width: 45px; height: 45px; background: linear-gradient(135deg, #28a745, #20c997); color: white; font-weight: bold;">
+                            {{ enseignant.nom.0 }}{{ enseignant.prenom.0 }}
                         </div>
                         {% endif %}
                     </td>
-                    <td><strong>{{ enseignant.matricule }}</strong></td>
-                    <td>{{ enseignant.nom_complet }}</td>
+                    <td>
+                        <span class="badge bg-secondary fs-6">{{ enseignant.matricule }}</span>
+                    </td>
+                    <td><strong>{{ enseignant.nom_complet }}</strong></td>
                     <td>
                         {% if enseignant.grade %}
                         <span class="badge bg-success">{{ enseignant.get_grade_display }}</span>
@@ -84,28 +90,115 @@
                         <span class="text-muted">—</span>
                         {% endif %}
                     </td>
-                    <td>{{ enseignant.specialite|default:"—" }}</td>
-                    <td>{{ enseignant.email }}</td>
-                    <td>{{ enseignant.telephone|default:"—" }}</td>
                     <td>
-                        <span class="badge bg-primary">{{ enseignant.get_nombre_cours }}</span>
+                        {% if enseignant.specialite %}
+                        <span class="badge bg-info">{{ enseignant.specialite }}</span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
                     </td>
-                    <td>
-                        <a href="{% url 'detail_enseignant' enseignant.matricule %}" 
-                           class="btn btn-sm btn-outline-primary" title="Voir">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <a href="{% url 'modifier_enseignant' enseignant.matricule %}" 
-                           class="btn btn-sm btn-outline-warning" title="Modifier">
-                            <i class="bi bi-pencil"></i>
-                        </a>
+                    <td><small>{{ enseignant.email }}</small></td>
+                    <td class="text-center">
+                        <span class="badge bg-primary fs-6">{{ enseignant.get_nombre_cours }}</span>
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'detail_enseignant' enseignant.matricule %}" 
+                               class="btn btn-sm btn-outline-primary"
+                               data-bs-toggle="tooltip"
+                               title="Voir détails">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            
+                            {% if user.profil.est_admin or user.profil.est_scolarite %}
+                            <a href="{% url 'modifier_enseignant' enseignant.matricule %}" 
+                               class="btn btn-sm btn-outline-warning"
+                               data-bs-toggle="tooltip"
+                               title="Modifier">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            
+                            {% if user.profil.est_admin %}
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal{{ enseignant.id }}"
+                                    title="Supprimer">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Modal de confirmation de suppression -->
+                        {% if user.profil.est_admin %}
+                        <div class="modal fade" id="deleteModal{{ enseignant.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">
+                                            <i class="bi bi-exclamation-triangle text-danger"></i> 
+                                            Confirmer la suppression
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Êtes-vous sûr de vouloir supprimer cet enseignant ?</p>
+                                        <div class="alert alert-warning">
+                                            <div class="d-flex align-items-center">
+                                                {% if enseignant.photo %}
+                                                <img src="{{ enseignant.photo.url }}" alt="{{ enseignant.nom_complet }}" 
+                                                     class="rounded-circle me-3" width="50" height="50" style="object-fit: cover;">
+                                                {% else %}
+                                                <div class="rounded-circle me-3 d-flex align-items-center justify-content-center" 
+                                                     style="width: 50px; height: 50px; background: #28a745; color: white; font-weight: bold;">
+                                                    {{ enseignant.nom.0 }}{{ enseignant.prenom.0 }}
+                                                </div>
+                                                {% endif %}
+                                                <div>
+                                                    <strong>{{ enseignant.nom_complet }}</strong><br>
+                                                    <small>{{ enseignant.matricule }} - {{ enseignant.get_grade_display|default:"Aucun grade" }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            <strong>Attention :</strong> Cette action est irréversible !
+                                            <ul class="mb-0 mt-2">
+                                                <li>Le compte utilisateur sera supprimé</li>
+                                                <li>{{ enseignant.get_nombre_cours }} cours assigné(s) seront désassignés</li>
+                                                <li>Toutes les données liées seront perdues</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            <i class="bi bi-x-circle"></i> Annuler
+                                        </button>
+                                        <form method="post" action="{% url 'supprimer_enseignant' enseignant.matricule %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="bi bi-trash"></i> Supprimer définitivement
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-5">
-                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-                        Aucun enseignant trouvé
+                    <td colspan="8" class="text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                        <h5 class="mt-3 mb-2" style="color: var(--primary-blue);">Aucun enseignant trouvé</h5>
+                        <p class="text-muted mb-4">Aucun résultat ne correspond à votre recherche</p>
+                        {% if user.profil.est_admin or user.profil.est_scolarite %}
+                        <a href="{% url 'ajouter_enseignant' %}" class="btn btn-primary">
+                            <i class="bi bi-person-plus"></i> Ajouter un enseignant
+                        </a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -119,29 +212,38 @@
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">
+                    <i class="bi bi-chevron-left"></i> Précédent
+                </a>
             </li>
             {% endif %}
             
-            {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
             <li class="page-item active">
-                <span class="page-link">{{ num }}</span>
+                <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
             </li>
-            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-            </li>
-            {% endif %}
-            {% endfor %}
             
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">
+                    Suivant <i class="bi bi-chevron-right"></i>
+                </a>
             </li>
             {% endif %}
         </ul>
     </nav>
     {% endif %}
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Activer les tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}

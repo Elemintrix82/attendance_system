@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter un Justificatif{% endblock %}
+{% block page_title %}Nouveau Justificatif{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            
+            <!-- En-tête -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-2">
+                        <i class="bi bi-file-earmark-plus"></i> Ajouter un Justificatif
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Étape 1 : Sélectionnez l'étudiant concerné
+                    </p>
+                </div>
+                <a href="{% url 'liste_justificatifs' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+            
+            <!-- Recherche d'étudiant -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-search"></i> Rechercher un étudiant
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="mb-3">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" 
+                                   name="search" 
+                                   class="form-control" 
+                                   placeholder="Matricule, nom ou prénom de l'étudiant..."
+                                   value="{{ search_query }}"
+                                   autofocus>
+                            <button type="submit" class="btn btn-primary">
+                                Rechercher
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Filtres supplémentaires -->
+                    <details class="mb-3">
+                        <summary class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-funnel"></i> Filtres avancés
+                        </summary>
+                        <form method="get" class="mt-3">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Formation</label>
+                                    <select name="formation" class="form-select">
+                                        <option value="">Toutes</option>
+                                        <option value="FI">Formation Initiale</option>
+                                        <option value="FA">Formation en Alternance</option>
+                                        <option value="MP">Master Professionnel</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Niveau</label>
+                                    <select name="niveau" class="form-select">
+                                        <option value="">Tous</option>
+                                        <option value="N3">Niveau 3</option>
+                                        <option value="N4">Niveau 4</option>
+                                        <option value="N5">Niveau 5</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        Appliquer
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Garder la recherche -->
+                            {% if search_query %}
+                            <input type="hidden" name="search" value="{{ search_query }}">
+                            {% endif %}
+                        </form>
+                    </details>
+                </div>
+            </div>
+            
+            <!-- Résultats -->
+            {% if etudiants %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people"></i> 
+                        {{ etudiants.count }} étudiant(s) trouvé(s)
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Matricule</th>
+                                    <th>Nom Complet</th>
+                                    <th>Filière</th>
+                                    <th>Absences</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for etudiant in etudiants %}
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary">{{ etudiant.matricule }}</strong>
+                                    </td>
+                                    <td>{{ etudiant.nom_complet }}</td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ etudiant.filiere.code }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% with nb_absences=etudiant.presences.filter|length %}
+                                        <span class="badge {% if nb_absences > 5 %}bg-danger{% elif nb_absences > 2 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                            {{ nb_absences }} absence(s)
+                                        </span>
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'ajouter_justificatif' etudiant.matricule %}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-circle"></i> Ajouter justificatif
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            Précédent
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            Suivant
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% elif search_query %}
+            <!-- Aucun résultat -->
+            <div class="alert alert-warning text-center py-5">
+                <i class="bi bi-search" style="font-size: 3rem; opacity: 0.5;"></i>
+                <h5 class="mt-3">Aucun étudiant trouvé</h5>
+                <p class="text-muted">
+                    Aucun étudiant ne correspond à "{{ search_query }}"
+                </p>
+                <a href="{% url 'selectionner_etudiant_justificatif' %}" class="btn btn-primary">
+                    Nouvelle recherche
+                </a>
+            </div>
+            
+            {% else %}
+            <!-- Message initial -->
+            <div class="alert alert-info text-center py-5">
+                <i class="bi bi-info-circle" style="font-size: 3rem; opacity: 0.5;"></i>
+                <h5 class="mt-3">Recherchez un étudiant</h5>
+                <p class="text-muted">
+                    Utilisez la barre de recherche ci-dessus pour trouver l'étudiant<br>
+                    pour lequel vous souhaitez ajouter un justificatif.
+                </p>
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+    }
+    
+    details summary {
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    details[open] summary {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}

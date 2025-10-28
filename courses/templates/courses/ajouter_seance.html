@@ -1,83 +1,252 @@
 {% extends 'base.html' %}
 
-{% block title %}Ajouter Séance{% endblock %}
-{% block page_title %}Nouvelle Séance{% endblock %}
+{% block title %}Ajouter une Séance - {{ cours.code }}{% endblock %}
+{% block page_title %}Ajouter une Séance{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="table-card">
-            <h4 class="mb-4">
-                <i class="bi bi-calendar-plus"></i> 
-                Ajouter une séance pour {{ cours.code }}
-            </h4>
-            
-            <div class="alert alert-info mb-4">
-                <strong>Cours:</strong> {{ cours.intitule }}<br>
-                <strong>Filière:</strong> {{ cours.filiere.nom }} - {{ cours.niveau.nom }}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-plus-circle"></i> Ajouter une Séance
+            </h2>
+            <p class="text-muted mb-0">
+                Pour le cours <span class="badge bg-primary">{{ cours.code }}</span> {{ cours.intitule }}
+            </p>
+        </div>
+        <a href="{% url 'detail_cours' cours.code %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour au cours
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <!-- Info du cours -->
+        <div class="alert" style="background: var(--light-gold); border-left: 4px solid var(--accent-gold);">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>📚 Cours :</strong> {{ cours.code }} - {{ cours.intitule }}</p>
+                    <p class="mb-1"><strong>🎓 Filière :</strong> {{ cours.filiere.code }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>👨‍🏫 Enseignant :</strong> {{ cours.enseignant.nom_complet|default:"Non assigné" }}</p>
+                    <p class="mb-1"><strong>🚪 Salle principale :</strong> {{ cours.salle.nom|default:"Non définie" }}</p>
+                </div>
             </div>
+        </div>
+        
+        <!-- Sélection rapide depuis horaire régulier -->
+        {% if cours.get_horaires %}
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="bi bi-lightning-charge"></i> 
+                <strong>Création rapide</strong> - Utiliser un horaire régulier du cours
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Sélectionnez un horaire pour pré-remplir automatiquement les informations de la séance :
+                </p>
+                
+                <div class="row g-3">
+                    {% for horaire in cours.get_horaires %}
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-outline-primary w-100 text-start horaire-btn" 
+                                data-horaire-id="{{ horaire.id }}"
+                                data-jour="{{ horaire.get_jour_semaine_display }}"
+                                data-heure-debut="{{ horaire.heure_debut|time:'H:i' }}"
+                                data-heure-fin="{{ horaire.heure_fin|time:'H:i' }}"
+                                data-salle="{{ horaire.salle.id|default:'' }}"
+                                data-type="{{ horaire.type_seance }}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ horaire.get_jour_semaine_display }}</strong>
+                                    <br>
+                                    <small>
+                                        <i class="bi bi-clock"></i> {{ horaire.heure_debut|time:"H:i" }} - {{ horaire.heure_fin|time:"H:i" }}
+                                        {% if horaire.type_seance == 'CM' %}
+                                        <span class="badge bg-primary ms-2">{{ horaire.get_type_seance_display }}</span>
+                                        {% elif horaire.type_seance == 'TD' %}
+                                        <span class="badge bg-success ms-2">{{ horaire.get_type_seance_display }}</span>
+                                        {% elif horaire.type_seance == 'TP' %}
+                                        <span class="badge bg-info ms-2">{{ horaire.get_type_seance_display }}</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <i class="bi bi-arrow-right-circle fs-4"></i>
+                            </div>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="alert alert-light mt-3 mb-0">
+                    <small>
+                        <i class="bi bi-info-circle"></i> 
+                        Cliquez sur un horaire pour pré-remplir le formulaire. Vous pourrez ensuite ajuster la date et les détails.
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Formulaire -->
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-info-circle"></i> Informations de la séance
+            </h5>
             
-            <form method="post">
+            <form method="post" novalidate>
                 {% csrf_token %}
                 
-                <div class="mb-3">
-                    <label class="form-label">Date <span class="text-danger">*</span></label>
-                    <input type="date" name="date" class="form-control" required>
+                <!-- Champ caché pour l'horaire de référence -->
+                <input type="hidden" id="horaire_cours_id" name="horaire_cours" value="">
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Cours</label>
+                        <input type="text" class="form-control" 
+                               value="{{ cours.code }} - {{ cours.intitule }}"
+                               disabled
+                               style="background-color: #e9ecef;">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="type_seance" class="form-label">
+                            Type de séance <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="type_seance" name="type_seance" required>
+                            <option value="">Sélectionnez un type</option>
+                            {% for code, label in types_seance %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
                 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Heure de début <span class="text-danger">*</span></label>
-                        <input type="time" name="heure_debut" class="form-control" 
-                               value="{{ cours.heure_debut|time:'H:i'|default:'' }}" required>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="date" class="form-label">
+                            Date <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                        <small class="text-muted" id="jour-info"></small>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Heure de fin <span class="text-danger">*</span></label>
-                        <input type="time" name="heure_fin" class="form-control" 
-                               value="{{ cours.heure_fin|time:'H:i'|default:'' }}" required>
+                    
+                    <div class="col-md-4">
+                        <label for="heure_debut" class="form-label">
+                            Heure de début <span class="text-danger">*</span>
+                        </label>
+                        <input type="time" class="form-control" id="heure_debut" name="heure_debut" required>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="heure_fin" class="form-label">
+                            Heure de fin <span class="text-danger">*</span>
+                        </label>
+                        <input type="time" class="form-control" id="heure_fin" name="heure_fin" required>
                     </div>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Salle</label>
-                    <select name="salle" class="form-select">
-                        <option value="">-- Choisir une salle --</option>
+                    <label for="salle" class="form-label">Salle</label>
+                    <select class="form-select" id="salle" name="salle">
+                        <option value="">Non définie</option>
                         {% for salle in salles %}
-                        <option value="{{ salle.id }}" 
-                                {% if cours.salle.id == salle.id %}selected{% endif %}>
-                            {{ salle.nom }} ({{ salle.get_type_salle_display }}) - {{ salle.capacite }} places
+                        <option value="{{ salle.id }}" {% if cours.salle == salle %}selected{% endif %}>
+                            {{ salle.nom }} - {{ salle.get_type_salle_display }} (Capacité: {{ salle.capacite }})
                         </option>
                         {% endfor %}
                     </select>
+                    {% if cours.salle %}
+                    <small class="text-success">
+                        <i class="bi bi-check-circle"></i> Salle principale du cours : {{ cours.salle.nom }}
+                    </small>
+                    {% endif %}
                 </div>
                 
-                <div class="mb-3">
-                    <label class="form-label">Type de séance <span class="text-danger">*</span></label>
-                    <select name="type_seance" class="form-select" required>
-                        {% for value, label in types_seance %}
-                        <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label">Contenu de la séance</label>
-                    <textarea name="contenu" class="form-control" rows="4" 
-                              placeholder="Résumé du contenu qui sera abordé..."></textarea>
+                <div class="mb-4">
+                    <label for="contenu" class="form-label">Contenu de la séance</label>
+                    <textarea class="form-control" id="contenu" name="contenu" rows="4" 
+                              placeholder="Ex: Introduction aux bases de données relationnelles, TP sur PostgreSQL, etc."></textarea>
+                    <small class="text-muted">Optionnel - Décrivez le programme de la séance</small>
                 </div>
                 
                 <hr>
                 
-                <div class="d-flex gap-2 justify-content-end">
-                    <a href="{% url 'detail_cours' cours.code %}" class="btn btn-secondary">
-                        <i class="bi bi-x-circle"></i> Annuler
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> Créer la séance
-                    </button>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires
+                    </small>
+                    <div>
+                        <a href="{% url 'detail_cours' cours.code %}" class="btn btn-secondary me-2">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Pré-remplissage depuis un horaire régulier
+    document.querySelectorAll('.horaire-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const horaireId = this.dataset.horaireId;
+            const heureDebut = this.dataset.heureDebut;
+            const heureFin = this.dataset.heureFin;
+            const salle = this.dataset.salle;
+            const type = this.dataset.type;
+            const jour = this.dataset.jour;
+            
+            // Remplir les champs
+            document.getElementById('horaire_cours_id').value = horaireId;
+            document.getElementById('heure_debut').value = heureDebut;
+            document.getElementById('heure_fin').value = heureFin;
+            document.getElementById('type_seance').value = type;
+            
+            if (salle) {
+                document.getElementById('salle').value = salle;
+            }
+            
+            // Afficher un message
+            document.getElementById('jour-info').innerHTML = 
+                `<i class="bi bi-info-circle text-info"></i> Basé sur l'horaire du ${jour}`;
+            
+            // Scroll vers le formulaire
+            document.querySelector('.table-card').scrollIntoView({ behavior: 'smooth' });
+            
+            // Highlight des boutons
+            document.querySelectorAll('.horaire-btn').forEach(b => {
+                b.classList.remove('active', 'btn-primary');
+                b.classList.add('btn-outline-primary');
+            });
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary', 'active');
+        });
+    });
+    
+    // Validation du formulaire
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const heureDebut = document.getElementById('heure_debut').value;
+        const heureFin = document.getElementById('heure_fin').value;
+        
+        if (heureDebut && heureFin && heureDebut >= heureFin) {
+            e.preventDefault();
+            alert('⚠️ L\'heure de fin doit être après l\'heure de début');
+            return false;
+        }
+    });
+    
+    // Définir la date d'aujourd'hui par défaut
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = today;
+</script>
 {% endblock %}

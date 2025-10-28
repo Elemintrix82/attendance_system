@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter un Horaire - {{ filiere.code }}{% endblock %}
+{% block page_title %}Ajouter un Horaire Supplémentaire{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-clock-fill"></i> Ajouter un Horaire Supplémentaire
+            </h2>
+            <p class="text-muted mb-0">
+                Pour la filière <span class="badge bg-primary">{{ filiere.code }}</span> - {{ filiere.nom_complet }}
+            </p>
+        </div>
+        <a href="{% url 'detail_filiere' filiere.code %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <!-- Info de la filière -->
+        <div class="alert" style="background: var(--light-gold); border-left: 4px solid var(--accent-gold);">
+            <h6 class="mb-2" style="color: var(--primary-blue);">
+                <i class="bi bi-info-circle"></i> Filière concernée
+            </h6>
+            <p class="mb-0">
+                <strong>{{ filiere.get_specialite_display }}</strong> - 
+                {{ filiere.get_formation_display }} - 
+                {{ filiere.get_niveau_display }}
+            </p>
+        </div>
+        
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-clock-history"></i> Définir l'horaire supplémentaire
+            </h5>
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="jour_semaine" class="form-label">Jour de la semaine <span class="text-danger">*</span></label>
+                    <select class="form-select" id="jour_semaine" name="jour_semaine" required>
+                        <option value="">Sélectionnez un jour</option>
+                        {% for code, label in jours %}
+                        <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="heure_debut" class="form-label">Heure de début <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control" id="heure_debut" name="heure_debut" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="heure_fin" class="form-label">Heure de fin <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control" id="heure_fin" name="heure_fin" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="salle" class="form-label">Salle</label>
+                    <select class="form-select" id="salle" name="salle">
+                        <option value="">Non définie</option>
+                        {% for salle in salles %}
+                        <option value="{{ salle.id }}">
+                            {{ salle.nom }} - {{ salle.get_type_salle_display }} (Cap: {{ salle.capacite }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Optionnel</small>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="remarque" class="form-label">Remarque</label>
+                    <input type="text" class="form-control" id="remarque" name="remarque"
+                           placeholder="Ex: Séances TP, Cours le soir, etc.">
+                    <small class="text-muted">Optionnel - Ajoutez une note pour ce créneau</small>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires
+                    </small>
+                    <div>
+                        <a href="{% url 'detail_filiere' filiere.code %}" class="btn btn-secondary me-2">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Info -->
+        <div class="table-card mt-4">
+            <h6 class="mb-3" style="color: var(--primary-blue);">
+                <i class="bi bi-lightbulb"></i> À propos des horaires supplémentaires
+            </h6>
+            <p class="text-muted small mb-0">
+                Les horaires supplémentaires permettent de définir plusieurs créneaux pour une même filière. 
+                Par exemple, si une filière a des cours le matin et l'après-midi, ou dans différentes salles.
+            </p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Validation du formulaire
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const heureDebut = document.getElementById('heure_debut').value;
+        const heureFin = document.getElementById('heure_fin').value;
+        
+        if (heureDebut && heureFin && heureDebut >= heureFin) {
+            e.preventDefault();
+            alert('⚠️ L\'heure de fin doit être après l\'heure de début');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

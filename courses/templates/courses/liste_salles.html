@@ -4,9 +4,25 @@
 {% block page_title %}Gestion des Salles{% endblock %}
 
 {% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-door-open-fill"></i> Liste des Salles
+            </h2>
+            <p class="text-muted mb-0">Gérez toutes les salles de cours</p>
+        </div>
+        {% if user.profil.est_admin or user.profil.est_scolarite %}
+        <a href="{% url 'ajouter_salle' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Ajouter une salle
+        </a>
+        {% endif %}
+    </div>
+</div>
+
 <!-- Statistiques -->
 <div class="row mb-4">
-    <div class="col-md-6">
+    <div class="col-md-3">
         <div class="stat-card primary">
             <div class="d-flex align-items-center">
                 <div class="icon me-3">
@@ -20,7 +36,7 @@
         </div>
     </div>
     
-    <div class="col-md-6">
+    <div class="col-md-3">
         <div class="stat-card success">
             <div class="d-flex align-items-center">
                 <div class="icon me-3">
@@ -28,7 +44,35 @@
                 </div>
                 <div>
                     <h3 class="mb-0">{{ salles_disponibles }}</h3>
-                    <p class="text-muted small mb-0">Salles disponibles</p>
+                    <p class="text-muted small mb-0">Disponibles</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card warning">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ batiments|length }}</h3>
+                    <p class="text-muted small mb-0">Bâtiments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card info">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ capacite_totale }}</h3>
+                    <p class="text-muted small mb-0">Capacité totale</p>
                 </div>
             </div>
         </div>
@@ -38,19 +82,21 @@
 <!-- Filtres -->
 <div class="table-card mb-4">
     <h5 class="mb-4">
-        <i class="bi bi-funnel-fill"></i> Rechercher une salle
+        <i class="bi bi-funnel-fill"></i> Filtres de recherche
     </h5>
     
     <form method="get" class="row g-3">
         <div class="col-md-4">
+            <label class="form-label">Rechercher</label>
             <input type="text" 
                    name="search" 
                    value="{{ search_query }}"
                    class="form-control" 
-                   placeholder="🔍 Nom de la salle...">
+                   placeholder="Nom de la salle...">
         </div>
         
         <div class="col-md-3">
+            <label class="form-label">Type de salle</label>
             <select name="type_salle" class="form-select">
                 <option value="">Tous les types</option>
                 {% for code, label in types_salle %}
@@ -62,6 +108,7 @@
         </div>
         
         <div class="col-md-3">
+            <label class="form-label">Bâtiment</label>
             <select name="batiment" class="form-select">
                 <option value="">Tous les bâtiments</option>
                 {% for bat in batiments %}
@@ -73,6 +120,7 @@
         </div>
         
         <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
             <button type="submit" class="btn btn-primary w-100">
                 <i class="bi bi-search"></i> Rechercher
             </button>
@@ -84,13 +132,9 @@
 <div class="table-card">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h5 class="mb-0">
-            <i class="bi bi-list-ul"></i> Liste des salles ({{ page_obj.paginator.count }})
+            <i class="bi bi-list-ul"></i> Liste des salles 
+            {% if page_obj %}({{ page_obj.paginator.count }}){% endif %}
         </h5>
-        {% if user.profil.est_admin or user.profil.est_scolarite %}
-        <a href="{% url 'admin:courses_salle_add' %}" class="btn btn-success">
-            <i class="bi bi-plus-circle"></i> Ajouter une salle
-        </a>
-        {% endif %}
     </div>
     
     {% if page_obj %}
@@ -98,46 +142,112 @@
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Type</th>
-                    <th>Bâtiment</th>
-                    <th>Étage</th>
-                    <th>Capacité</th>
-                    <th>Équipements</th>
-                    <th>Statut</th>
+                    <th width="15%">Nom</th>
+                    <th width="15%">Type</th>
+                    <th width="15%">Bâtiment</th>
+                    <th width="8%">Étage</th>
+                    <th width="10%">Capacité</th>
+                    <th width="20%">Équipements</th>
+                    <th width="10%">Statut</th>
+                    <th width="12%" class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for salle in page_obj %}
                 <tr>
                     <td>
-                        <strong>{{ salle.nom }}</strong>
+                        <strong style="color: var(--primary-blue);">{{ salle.nom }}</strong>
                     </td>
                     <td>
                         <span class="badge bg-info">{{ salle.get_type_salle_display }}</span>
                     </td>
-                    <td>{{ salle.batiment|default:"—" }}</td>
+                    <td>
+                        <i class="bi bi-building"></i> {{ salle.batiment|default:"—" }}
+                    </td>
                     <td class="text-center">
                         {% if salle.etage %}
-                            Étage {{ salle.etage }}
+                            <span class="badge bg-secondary">{{ salle.etage }}</span>
                         {% else %}
                             —
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        <span class="badge bg-secondary">{{ salle.capacite }} places</span>
+                        <span class="badge" style="background: var(--accent-gold); color: var(--primary-blue);">
+                            <i class="bi bi-people-fill"></i> {{ salle.capacite }}
+                        </span>
                     </td>
                     <td>
                         <small class="text-muted">
-                            {{ salle.equipements|truncatewords:5|default:"—" }}
+                            {{ salle.equipements|truncatewords:5|default:"Aucun équipement" }}
                         </small>
                     </td>
                     <td>
                         {% if salle.disponible %}
-                        <span class="badge bg-success">Disponible</span>
+                        <span class="badge-present">
+                            <i class="bi bi-check-circle"></i> Disponible
+                        </span>
                         {% else %}
-                        <span class="badge bg-danger">Occupée</span>
+                        <span class="badge-absent">
+                            <i class="bi bi-x-circle"></i> Occupée
+                        </span>
                         {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'detail_salle' salle.id %}" 
+                               class="btn btn-sm btn-outline-primary"
+                               data-bs-toggle="tooltip"
+                               title="Voir détails">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            
+                            {% if user.profil.est_admin or user.profil.est_scolarite %}
+                            <a href="{% url 'modifier_salle' salle.id %}" 
+                               class="btn btn-sm btn-outline-warning"
+                               data-bs-toggle="tooltip"
+                               title="Modifier">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal{{ salle.id }}"
+                                    title="Supprimer">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Modal de confirmation de suppression -->
+                        <div class="modal fade" id="deleteModal{{ salle.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmer la suppression</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Êtes-vous sûr de vouloir supprimer cette salle ?</p>
+                                        <div class="alert alert-warning">
+                                            <strong>{{ salle.nom }}</strong> - {{ salle.get_type_salle_display }}<br>
+                                            <small>{{ salle.batiment }} - Capacité: {{ salle.capacite }} places</small>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            Annuler
+                                        </button>
+                                        <form method="post" action="{% url 'supprimer_salle' salle.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="bi bi-trash"></i> Supprimer
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -152,7 +262,7 @@
             {% if page_obj.has_previous %}
             <li class="page-item">
                 <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&type_salle={{ type_salle }}&batiment={{ batiment }}">
-                    Précédent
+                    <i class="bi bi-chevron-left"></i> Précédent
                 </a>
             </li>
             {% endif %}
@@ -164,7 +274,7 @@
             {% if page_obj.has_next %}
             <li class="page-item">
                 <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&type_salle={{ type_salle }}&batiment={{ batiment }}">
-                    Suivant
+                    Suivant <i class="bi bi-chevron-right"></i>
                 </a>
             </li>
             {% endif %}
@@ -174,8 +284,26 @@
     {% else %}
     <div class="text-center py-5">
         <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
-        <p class="text-muted mt-3">Aucune salle trouvée</p>
+        <h5 class="mt-3 mb-2" style="color: var(--primary-blue);">Aucune salle trouvée</h5>
+        <p class="text-muted mb-4">Commencez par ajouter une salle</p>
+        {% if user.profil.est_admin or user.profil.est_scolarite %}
+        <a href="{% url 'ajouter_salle' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Ajouter une salle
+        </a>
+        {% endif %}
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Activer les tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}

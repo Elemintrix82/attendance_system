@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter une Salle{% endblock %}
+{% block page_title %}Ajouter une Salle{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-plus-circle"></i> Ajouter une Salle
+            </h2>
+            <p class="text-muted mb-0">Créez une nouvelle salle de cours</p>
+        </div>
+        <a href="{% url 'liste_salles' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-info-circle"></i> Informations de la salle
+            </h5>
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="nom" class="form-label">Nom de la salle <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nom" name="nom" required
+                               placeholder="Ex: Amphi A, Salle 101">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="type_salle" class="form-label">Type de salle <span class="text-danger">*</span></label>
+                        <select class="form-select" id="type_salle" name="type_salle" required>
+                            <option value="">Sélectionnez un type</option>
+                            {% for code, label in types_salle %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="batiment" class="form-label">Bâtiment</label>
+                        <input type="text" class="form-control" id="batiment" name="batiment"
+                               placeholder="Ex: Bâtiment A, Bloc 1">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="etage" class="form-label">Étage</label>
+                        <input type="number" class="form-control" id="etage" name="etage" min="0" max="10"
+                               placeholder="Ex: 1, 2, 3">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="capacite" class="form-label">Capacité <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="capacite" name="capacite" required min="1"
+                               placeholder="Nombre de places">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="equipements" class="form-label">Équipements</label>
+                    <textarea class="form-control" id="equipements" name="equipements" rows="3"
+                              placeholder="Ex: Projecteur, Tableau blanc, Ordinateurs, Climatisation..."></textarea>
+                    <small class="text-muted">Listez les équipements disponibles dans la salle</small>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="disponible" name="disponible" checked>
+                        <label class="form-check-label" for="disponible">
+                            Salle disponible
+                        </label>
+                    </div>
+                    <small class="text-muted">Décochez si la salle est temporairement indisponible</small>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires
+                    </small>
+                    <div>
+                        <a href="{% url 'liste_salles' %}" class="btn btn-secondary me-2">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Modifier le Justificatif</h2>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div class="mb-3">
+        <label>Type</label>
+        <select name="type_justificatif" class="form-select" required>
+            {% for value, label in types %}
+            <option value="{{ value }}" {% if justificatif.type_justificatif == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="mb-3">
+        <label>Date début</label>
+        <input type="date" name="date_debut" class="form-control" value="{{ justificatif.date_debut|date:'Y-m-d' }}" required>
+    </div>
+    
+    <div class="mb-3">
+        <label>Date fin</label>
+        <input type="date" name="date_fin" class="form-control" value="{% if justificatif.date_fin %}{{ justificatif.date_fin|date:'Y-m-d' }}{% endif %}">
+    </div>
+    
+    <div class="mb-3">
+        <label>Motif</label>
+        <textarea name="motif" class="form-control" rows="4" required>{{ justificatif.motif }}</textarea>
+    </div>
+    
+    <div class="mb-3">
+        <label>Fichier</label>
+        <input type="file" name="fichier" class="form-control">
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Enregistrer</button>
+    <a href="{% url 'detail_justificatif' justificatif.id %}" class="btn btn-secondary">Annuler</a>
+</form>
+{% endblock %}

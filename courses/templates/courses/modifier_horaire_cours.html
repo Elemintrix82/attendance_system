@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier Horaire - {{ horaire.cours.code }}{% endblock %}
+{% block page_title %}Modifier un Horaire{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="table-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">
+                    <i class="bi bi-pencil-square"></i> Modifier un Horaire
+                </h4>
+                <a href="{% url 'detail_cours' horaire.cours.code %}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>Cours :</strong> 
+                <span class="badge bg-primary">{{ horaire.cours.code }}</span> - {{ horaire.cours.intitule }}
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar-week"></i> Jour de la semaine <span class="text-danger">*</span>
+                        </label>
+                        <select name="jour_semaine" class="form-select" required>
+                            {% for value, label in jours_semaine %}
+                            <option value="{{ value }}" {% if horaire.jour_semaine == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-bookmark-fill"></i> Type de séance <span class="text-danger">*</span>
+                        </label>
+                        <select name="type_seance" class="form-select" required>
+                            {% for value, label in types_seance %}
+                            <option value="{{ value }}" {% if horaire.type_seance == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-clock"></i> Heure de début <span class="text-danger">*</span>
+                        </label>
+                        <input type="time" name="heure_debut" class="form-control" 
+                               value="{{ horaire.heure_debut|time:'H:i' }}" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-clock-fill"></i> Heure de fin <span class="text-danger">*</span>
+                        </label>
+                        <input type="time" name="heure_fin" class="form-control" 
+                               value="{{ horaire.heure_fin|time:'H:i' }}" required>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-door-open"></i> Salle
+                    </label>
+                    <select name="salle" class="form-select">
+                        <option value="">-- Utiliser la salle principale du cours ({{ horaire.cours.salle.nom|default:"Non définie" }}) --</option>
+                        {% for salle in salles %}
+                        <option value="{{ salle.id }}" {% if horaire.salle.id == salle.id %}selected{% endif %}>
+                            {{ salle.nom }} ({{ salle.capacite }} places - {{ salle.get_type_salle_display }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-chat-left-text"></i> Remarque
+                    </label>
+                    <textarea name="remarque" class="form-control" rows="3">{{ horaire.remarque|default:'' }}</textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input type="checkbox" name="actif" class="form-check-input" id="actif" 
+                               {% if horaire.actif %}checked{% endif %}>
+                        <label class="form-check-label" for="actif">
+                            <i class="bi bi-check-circle"></i> Horaire actif
+                        </label>
+                    </div>
+                    <small class="text-muted">Décocher pour désactiver temporairement cet horaire.</small>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'detail_cours' horaire.cours.code %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -5,46 +5,246 @@
 
 {% block content %}
 <div class="page-header">
-    <h2 class="mb-2">
-        <i class="bi bi-folder2-open"></i> Liste des Filières
-    </h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-diagram-3-fill"></i> Liste des Filières
+            </h2>
+            <p class="text-muted mb-0">Gérez toutes les filières (Spécialité + Formation + Niveau)</p>
+        </div>
+        {% if user.profil.est_admin or user.profil.est_scolarite %}
+        <a href="{% url 'ajouter_filiere' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Ajouter une filière
+        </a>
+        {% endif %}
+    </div>
 </div>
 
-<div class="row">
-    {% for filiere in filieres %}
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 border-primary">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <span class="badge bg-primary fs-6">{{ filiere.code }}</span>
-                </h5>
-                <h6 class="card-subtitle mb-3 text-primary">{{ filiere.nom }}</h6>
-                
-                {% if filiere.description %}
-                <p class="card-text text-muted small">{{ filiere.description|truncatewords:20 }}</p>
-                {% endif %}
-                
-                <hr>
-                
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <i class="bi bi-people-fill text-primary"></i>
-                        <strong>{{ filiere.nb_etudiants }}</strong> étudiant(s)
-                    </div>
-                    <a href="{% url 'detail_filiere' filiere.code %}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-eye"></i> Voir détails
-                    </a>
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="stat-card primary">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-diagram-3-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ total_filieres }}</h3>
+                    <p class="text-muted small mb-0">Filières actives</p>
                 </div>
             </div>
         </div>
     </div>
-    {% empty %}
-    <div class="col-12">
-        <div class="table-card text-center py-5">
-            <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-            <p class="text-muted">Aucune filière disponible</p>
+    
+    <div class="col-md-6">
+        <div class="stat-card success">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ total_etudiants }}</h3>
+                    <p class="text-muted small mb-0">Étudiants inscrits</p>
+                </div>
+            </div>
         </div>
     </div>
-    {% endfor %}
 </div>
+
+<!-- Filtres -->
+<div class="table-card mb-4">
+    <h5 class="mb-4">
+        <i class="bi bi-funnel-fill"></i> Filtres
+    </h5>
+    
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Spécialité</label>
+            <select name="specialite" class="form-select">
+                <option value="">Toutes les spécialités</option>
+                {% for code, label in specialites %}
+                <option value="{{ code }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-4">
+            <label class="form-label">Formation</label>
+            <select name="formation" class="form-select">
+                <option value="">Toutes les formations</option>
+                {% for code, label in formations %}
+                <option value="{{ code }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <label class="form-label">Niveau</label>
+            <select name="niveau" class="form-select">
+                <option value="">Tous</option>
+                {% for code, label in niveaux %}
+                <option value="{{ code }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> Filtrer
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Liste des filières par spécialité -->
+{% regroup filieres by specialite as filieres_par_specialite %}
+
+{% for specialite_group in filieres_par_specialite %}
+<div class="table-card mb-4">
+    <h5 class="mb-4" style="color: var(--primary-blue);">
+        <i class="bi bi-folder-fill"></i> {{ specialite_group.list.0.get_specialite_display }}
+    </h5>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th width="15%">Code</th>
+                    <th width="20%">Formation</th>
+                    <th width="10%">Niveau</th>
+                    <th width="20%">Horaire principal</th>
+                    <th width="10%">Salle</th>
+                    <th width="10%">Étudiants</th>
+                    <th width="15%" class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for filiere in specialite_group.list %}
+                <tr>
+                    <td>
+                        <span class="badge bg-primary fs-6">{{ filiere.code }}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">{{ filiere.get_formation_display }}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">{{ filiere.get_niveau_display }}</span>
+                    </td>
+                    <td>
+                        {% if filiere.jour_semaine and filiere.heure_debut and filiere.heure_fin %}
+                        <small>
+                            <i class="bi bi-calendar"></i> {{ filiere.get_jour_semaine_display }}<br>
+                            <i class="bi bi-clock"></i> {{ filiere.heure_debut|time:"H:i" }} - {{ filiere.heure_fin|time:"H:i" }}
+                        </small>
+                        {% else %}
+                        <span class="text-muted">Non défini</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if filiere.salle_principale %}
+                        <small><i class="bi bi-door-open"></i> {{ filiere.salle_principale.nom }}</small>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge" style="background: var(--accent-gold); color: var(--primary-blue);">
+                            <i class="bi bi-people-fill"></i> {{ filiere.nb_etudiants }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'detail_filiere' filiere.code %}" 
+                               class="btn btn-sm btn-outline-primary"
+                               data-bs-toggle="tooltip"
+                               title="Voir détails">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            
+                            {% if user.profil.est_admin or user.profil.est_scolarite %}
+                            <a href="{% url 'modifier_filiere' filiere.code %}" 
+                               class="btn btn-sm btn-outline-warning"
+                               data-bs-toggle="tooltip"
+                               title="Modifier">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal{{ filiere.id }}"
+                                    title="Supprimer">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Modal de suppression -->
+                        <div class="modal fade" id="deleteModal{{ filiere.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmer la suppression</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Êtes-vous sûr de vouloir supprimer cette filière ?</p>
+                                        <div class="alert alert-warning">
+                                            <strong>{{ filiere.nom_complet }}</strong><br>
+                                            <small>{{ filiere.code }}</small>
+                                        </div>
+                                        {% if filiere.nb_etudiants > 0 %}
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            <strong>Attention :</strong> Cette filière a {{ filiere.nb_etudiants }} étudiant(s) inscrit(s) !
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            Annuler
+                                        </button>
+                                        <form method="post" action="{% url 'supprimer_filiere' filiere.code %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="bi bi-trash"></i> Supprimer
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% empty %}
+<div class="table-card text-center py-5">
+    <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+    <h5 class="mt-3 mb-2" style="color: var(--primary-blue);">Aucune filière disponible</h5>
+    <p class="text-muted mb-4">Commencez par ajouter votre première filière</p>
+    {% if user.profil.est_admin or user.profil.est_scolarite %}
+    <a href="{% url 'ajouter_filiere' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Ajouter une filière
+    </a>
+    {% endif %}
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Activer les tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}

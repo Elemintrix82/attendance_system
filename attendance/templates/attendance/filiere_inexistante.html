@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Filière Inexistante{% endblock %}
+{% block page_title %}Filière Introuvable{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            <!-- Message principal -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 5rem; color: #dc3545; opacity: 0.6;"></i>
+                    </div>
+                    
+                    <h2 class="mb-3" style="color: var(--primary-blue);">Filière Introuvable</h2>
+                    
+                    <p class="text-muted mb-4">
+                        Aucune filière n'existe dans le système avec les critères suivants :
+                    </p>
+                    
+                    <div class="alert alert-danger d-inline-block mb-4">
+                        <div class="text-start">
+                            <p class="mb-2"><strong>Formation :</strong> 
+                                {% if formation == 'FI' %}Formation Initiale
+                                {% elif formation == 'FA' %}Formation en Alternance
+                                {% elif formation == 'MP' %}Master Professionnel
+                                {% else %}{{ formation }}{% endif %}
+                            </p>
+                            <p class="mb-2"><strong>Spécialité :</strong> {{ specialite }}</p>
+                            <p class="mb-0"><strong>Niveau :</strong> {{ niveau }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions possibles -->
+                    <div class="mt-4 pt-3 border-top">
+                        <h6 class="mb-3" style="color: var(--primary-blue);">Que souhaitez-vous faire ?</h6>
+                        
+                        <div class="d-flex gap-3 justify-content-center flex-wrap">
+                            {% if user.profil.est_admin or user.profil.est_scolarite %}
+                            <a href="{% url 'ajouter_filiere' %}?formation={{ formation }}&specialite={{ specialite }}&niveau={{ niveau }}" 
+                               class="btn btn-primary btn-lg">
+                                <i class="bi bi-plus-circle"></i> Créer cette Filière
+                            </a>
+                            {% endif %}
+                            
+                            <a href="{% url 'navigation_presences' %}" 
+                               class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-arrow-left"></i> Changer de Filière
+                            </a>
+                            
+                            <a href="{% url 'liste_filieres' %}" 
+                               class="btn btn-outline-info btn-lg">
+                                <i class="bi bi-list-ul"></i> Voir toutes les Filières
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Information supplémentaire -->
+                    <div class="mt-5 pt-4 border-top">
+                        <div class="alert alert-info text-start">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Information :</strong> 
+                            Si cette filière devrait exister, contactez l'administrateur système pour la créer.
+                            Les filières doivent être configurées avant de pouvoir y enregistrer des étudiants ou des présences.
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}

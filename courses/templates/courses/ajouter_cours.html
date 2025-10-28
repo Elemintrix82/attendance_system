@@ -12,6 +12,14 @@
                 {% if cours %}Modifier le cours: {{ cours.code }}{% else %}Ajouter un nouveau cours{% endif %}
             </h4>
             
+            {% if cours %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>Note :</strong> Les horaires du cours sont maintenant gérés séparément. 
+                Après avoir sauvegardé, vous pourrez ajouter plusieurs horaires depuis la page de détail du cours.
+            </div>
+            {% endif %}
+            
             <form method="post">
                 {% csrf_token %}
                 
@@ -43,26 +51,18 @@
                             <label class="form-label">Filière <span class="text-danger">*</span></label>
                             <select name="filiere" class="form-select" required>
                                 <option value="">-- Choisir --</option>
-                                {% for filiere in filieres %}
-                                <option value="{{ filiere.id }}" 
-                                        {% if cours.filiere.id == filiere.id %}selected{% endif %}>
-                                    {{ filiere.code }} - {{ filiere.nom }}
-                                </option>
+                                {% regroup filieres by specialite as filieres_par_specialite %}
+                                {% for specialite_group in filieres_par_specialite %}
+                                <optgroup label="{{ specialite_group.list.0.get_specialite_display }}">
+                                    {% for filiere in specialite_group.list %}
+                                    <option value="{{ filiere.id }}" {% if cours.filiere == filiere %}selected{% endif %}>
+                                        {{ filiere.code }} - {{ filiere.nom_complet }}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
                                 {% endfor %}
                             </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Niveau <span class="text-danger">*</span></label>
-                            <select name="niveau" class="form-select" required>
-                                <option value="">-- Choisir --</option>
-                                {% for niveau in niveaux %}
-                                <option value="{{ niveau.id }}" 
-                                        {% if cours.niveau.id == niveau.id %}selected{% endif %}>
-                                    {{ niveau.nom }}
-                                </option>
-                                {% endfor %}
-                            </select>
+                            <small class="text-muted">Inclut : Spécialité + Formation + Niveau</small>
                         </div>
                         
                         <div class="mb-3">
@@ -79,7 +79,7 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label">Salle</label>
+                            <label class="form-label">Salle principale</label>
                             <select name="salle" class="form-select">
                                 <option value="">-- Non définie --</option>
                                 {% for salle in salles %}
@@ -89,6 +89,7 @@
                                 </option>
                                 {% endfor %}
                             </select>
+                            <small class="text-muted">Salle par défaut. Chaque horaire peut avoir sa propre salle.</small>
                         </div>
                     </div>
                     
@@ -114,33 +115,7 @@
                                    value="{{ cours.annee_academique|default:'' }}" required>
                         </div>
                         
-                        <h5 class="mb-3 mt-4 text-warning">Horaire</h5>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Jour de la semaine</label>
-                            <select name="jour_semaine" class="form-select">
-                                <option value="">-- Non défini --</option>
-                                {% for value, label in jours_semaine %}
-                                <option value="{{ value }}" 
-                                        {% if cours.jour_semaine == value %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Heure début</label>
-                                <input type="time" name="heure_debut" class="form-control" 
-                                       value="{{ cours.heure_debut|time:'H:i'|default:'' }}">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Heure fin</label>
-                                <input type="time" name="heure_fin" class="form-control" 
-                                       value="{{ cours.heure_fin|time:'H:i'|default:'' }}">
-                            </div>
-                        </div>
+                        <!-- ❌ SUPPRIMÉ : Section Horaire (maintenant géré via HoraireCours) -->
                         
                         <h5 class="mb-3 mt-4 text-secondary">Crédits et volumes</h5>
                         
@@ -174,6 +149,14 @@
                             <input type="number" name="volume_horaire_tp" class="form-control" 
                                    min="0" value="{{ cours.volume_horaire_tp|default:0 }}">
                         </div>
+                        
+                        {% if cours %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-clock-history"></i>
+                            <strong>Horaires :</strong> Gérez les horaires depuis 
+                            <a href="{% url 'detail_cours' cours.code %}">la page de détail du cours</a>.
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 
@@ -190,6 +173,14 @@
                     </button>
                 </div>
             </form>
+            
+            {% if not cours %}
+            <div class="alert alert-info mt-3">
+                <i class="bi bi-lightbulb"></i>
+                <strong>Prochaine étape :</strong> Après avoir créé le cours, vous pourrez ajouter plusieurs horaires 
+                (ex: Lundi 8h-10h + Mercredi 14h-16h).
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

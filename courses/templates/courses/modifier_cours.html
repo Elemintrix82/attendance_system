@@ -43,26 +43,18 @@
                             <label class="form-label">Filière <span class="text-danger">*</span></label>
                             <select name="filiere" class="form-select" required>
                                 <option value="">-- Choisir --</option>
-                                {% for filiere in filieres %}
-                                <option value="{{ filiere.id }}" 
-                                        {% if cours.filiere.id == filiere.id %}selected{% endif %}>
-                                    {{ filiere.code }} - {{ filiere.nom }}
-                                </option>
+                                {% regroup filieres by specialite as filieres_par_specialite %}
+                                {% for specialite_group in filieres_par_specialite %}
+                                <optgroup label="{{ specialite_group.list.0.get_specialite_display }}">
+                                    {% for filiere in specialite_group.list %}
+                                    <option value="{{ filiere.id }}" {% if cours.filiere == filiere %}selected{% endif %}>
+                                        {{ filiere.code }} - {{ filiere.nom_complet }}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
                                 {% endfor %}
                             </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Niveau <span class="text-danger">*</span></label>
-                            <select name="niveau" class="form-select" required>
-                                <option value="">-- Choisir --</option>
-                                {% for niveau in niveaux %}
-                                <option value="{{ niveau.id }}" 
-                                        {% if cours.niveau.id == niveau.id %}selected{% endif %}>
-                                    {{ niveau.nom }}
-                                </option>
-                                {% endfor %}
-                            </select>
+                            <small class="text-muted">Inclut : Spécialité + Formation + Niveau</small>
                         </div>
                         
                         <div class="mb-3">

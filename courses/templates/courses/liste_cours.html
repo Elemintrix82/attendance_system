@@ -4,55 +4,63 @@
 {% block page_title %}Gestion des Cours{% endblock %}
 
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center">
-    <div>
-        <h2 class="mb-2">
-            <i class="bi bi-book-fill"></i> Liste des Cours
-        </h2>
-        <p class="text-muted mb-0">{{ total_cours }} cours actif(s)</p>
-    </div>
-    <div>
-        <a href="{% url 'liste_seances' %}" class="btn btn-info me-2">
-            <i class="bi bi-calendar-event"></i> Séances
-        </a>
-        <a href="{% url 'ajouter_cours' %}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Ajouter un cours
-        </a>
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-book-fill"></i> Liste des Cours
+            </h2>
+            <p class="text-muted mb-0">{{ total_cours }} cours actif(s)</p>
+        </div>
+        <div>
+            <a href="{% url 'liste_seances' %}" class="btn btn-info me-2">
+                <i class="bi bi-calendar-event"></i> Séances
+            </a>
+            <a href="{% url 'ajouter_cours' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Ajouter un cours
+            </a>
+        </div>
     </div>
 </div>
 
 <!-- Filtres -->
 <div class="table-card mb-4">
+    <h5 class="mb-4">
+        <i class="bi bi-funnel-fill"></i> Filtres de recherche
+    </h5>
+    
     <form method="get" class="row g-3">
         <div class="col-md-3">
+            <label class="form-label">Rechercher</label>
             <input type="text" name="search" class="form-control" 
-                   placeholder="Rechercher (code, intitulé...)" 
+                   placeholder="Code ou intitulé..." 
                    value="{{ search_query }}">
         </div>
         <div class="col-md-3">
+            <label class="form-label">Filière</label>
             <select name="filiere" class="form-select">
                 <option value="">Toutes les filières</option>
                 {% for filiere in filieres %}
-                <option value="{{ filiere.id }}">{{ filiere.nom }}</option>
+                <option value="{{ filiere.id }}">{{ filiere.code }} - {{ filiere.nom }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-md-2">
-            <select name="niveau" class="form-select">
-                <option value="">Tous les niveaux</option>
-                {% for niveau in niveaux %}
-                <option value="{{ niveau.id }}">{{ niveau.nom }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-2">
+            <label class="form-label">Semestre</label>
             <select name="semestre" class="form-select">
-                <option value="">Tous les semestres</option>
+                <option value="">Tous</option>
                 <option value="1">Semestre 1</option>
                 <option value="2">Semestre 2</option>
+                <option value="2">Semestre 3</option>
+                <option value="2">Semestre 4</option>
+                <option value="2">Semestre 5</option>
+                <option value="2">Semestre 6</option>
+                <option value="2">Semestre 7</option>
+                <option value="2">Semestre 8</option>
             </select>
         </div>
         <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
             <button type="submit" class="btn btn-primary w-100">
                 <i class="bi bi-search"></i> Rechercher
             </button>
@@ -64,55 +72,121 @@
 <div class="table-card">
     <div class="table-responsive">
         <table class="table table-hover align-middle">
-            <thead class="table-light">
+            <thead>
                 <tr>
                     <th>Code</th>
                     <th>Intitulé</th>
                     <th>Filière</th>
-                    <th>Niveau</th>
                     <th>Enseignant</th>
                     <th>Semestre</th>
                     <th>Crédits</th>
                     <th>Séances</th>
-                    <th>Actions</th>
+                    <th class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for cours in page_obj %}
                 <tr>
-                    <td><span class="badge bg-primary">{{ cours.code }}</span></td>
+                    <td><span class="badge bg-primary fs-6">{{ cours.code }}</span></td>
                     <td><strong>{{ cours.intitule }}</strong></td>
-                    <td><span class="badge bg-info">{{ cours.filiere.code }}</span></td>
-                    <td>{{ cours.niveau.nom }}</td>
+                    <td>
+                        <span class="badge" style="background: var(--accent-gold); color: var(--primary-blue);">
+                            {{ cours.filiere.code }}
+                        </span>
+                        <br>
+                        <small class="text-muted">{{ cours.filiere.nom_complet }}</small>
+                    </td>
                     <td>
                         {% if cours.enseignant %}
-                        <small>{{ cours.enseignant.nom_complet }}</small>
+                        <small>{{ cours.enseignant.nom_complet|truncatewords:2 }}</small>
                         {% else %}
                         <span class="text-muted">Non assigné</span>
                         {% endif %}
                     </td>
-                    <td><span class="badge bg-secondary">S{{ cours.semestre }}</span></td>
-                    <td><span class="badge bg-success">{{ cours.credits }}</span></td>
-                    <td><span class="badge bg-warning">{{ cours.nb_seances }}</span></td>
+                    <td><span class="badge bg-info">S{{ cours.semestre }}</span></td>
                     <td>
-                        <a href="{% url 'detail_cours' cours.code %}" 
-                           class="btn btn-sm btn-outline-primary" title="Voir">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <a href="{% url 'modifier_cours' cours.code %}" 
-                           class="btn btn-sm btn-outline-warning" title="Modifier">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <a href="{% url 'ajouter_seance' cours.code %}" 
-                           class="btn btn-sm btn-success" title="Ajouter séance">
-                            <i class="bi bi-plus"></i>
-                        </a>
+                        <i class="bi bi-star-fill text-warning"></i>
+                        <strong>{{ cours.credits }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge bg-success">{{ cours.get_nombre_seances }}</span> séance(s)
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'detail_cours' cours.code %}" 
+                               class="btn btn-sm btn-outline-primary"
+                               data-bs-toggle="tooltip"
+                               title="Voir détails">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            
+                            {% if user.profil.est_admin or user.profil.est_scolarite %}
+                            <a href="{% url 'modifier_cours' cours.code %}" 
+                               class="btn btn-sm btn-outline-warning"
+                               data-bs-toggle="tooltip"
+                               title="Modifier">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal{{ cours.id }}"
+                                    title="Supprimer">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                            
+                            <a href="{% url 'ajouter_seance' cours.code %}" 
+                               class="btn btn-sm btn-success"
+                               data-bs-toggle="tooltip"
+                               title="Ajouter séance">
+                                <i class="bi bi-plus-circle"></i>
+                            </a>
+                        </div>
+                        
+                        <!-- Modal de confirmation de suppression -->
+                        <div class="modal fade" id="deleteModal{{ cours.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmer la suppression</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Êtes-vous sûr de vouloir supprimer ce cours ?</p>
+                                        <div class="alert alert-warning">
+                                            <strong>{{ cours.code }}</strong> - {{ cours.intitule }}<br>
+                                            <small>{{ cours.filiere.code }} - {{ cours.niveau.nom }}</small>
+                                        </div>
+                                        {% if cours.get_nombre_seances > 0 %}
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            <strong>Attention :</strong> Ce cours a {{ cours.get_nombre_seances }} séance(s) enregistrée(s) !
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            Annuler
+                                        </button>
+                                        <form method="post" action="{% url 'supprimer_cours' cours.code %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="bi bi-trash"></i> Supprimer
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-5">
-                        Aucun cours trouvé
+                    <td colspan="9" class="text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3">Aucun cours trouvé</p>
                     </td>
                 </tr>
                 {% endfor %}
@@ -126,21 +200,37 @@
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                    <i class="bi bi-chevron-left"></i> Précédent
+                </a>
             </li>
             {% endif %}
             
             <li class="page-item active">
-                <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
             </li>
             
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                    Suivant <i class="bi bi-chevron-right"></i>
+                </a>
             </li>
             {% endif %}
         </ul>
     </nav>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Activer les tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}

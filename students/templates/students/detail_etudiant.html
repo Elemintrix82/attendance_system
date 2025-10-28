@@ -3,18 +3,108 @@
 {% block title %}{{ etudiant.nom_complet }}{% endblock %}
 {% block page_title %}Détail Étudiant{% endblock %}
 
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card.primary { background: linear-gradient(135deg, #0066cc, #004c99); color: white; }
+    .stat-card.success { background: linear-gradient(135deg, #28a745, #1e7e34); color: white; }
+    .stat-card.warning { background: linear-gradient(135deg, #ffc107, #e0a800); color: white; }
+    .stat-card.danger { background: linear-gradient(135deg, #dc3545, #bd2130); color: white; }
+    .stat-card.info { background: linear-gradient(135deg, #17a2b8, #117a8b); color: white; }
+    
+    .stat-card h3 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 350px;
+        margin-bottom: 2rem;
+    }
+    
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-blue);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--accent-gold);
+    }
+    
+    .badge-status {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .matricule-dept {
+        background: linear-gradient(135deg, var(--accent-gold), #d4a017);
+        color: var(--primary-blue);
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        font-size: 1.1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        display: inline-block;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center">
     <div>
         <h2 class="mb-2">
             <i class="bi bi-person-circle"></i> {{ etudiant.nom_complet }}
         </h2>
-        <p class="text-muted mb-0">Matricule: {{ etudiant.matricule }}</p>
+        <div class="d-flex gap-3 align-items-center">
+            <p class="text-muted mb-0">
+                <i class="bi bi-person-badge"></i> Matricule Perso: 
+                <span class="badge bg-secondary">{{ etudiant.matricule }}</span>
+            </p>
+            {% if etudiant.matricule_departement %}
+            <p class="text-muted mb-0">
+                <i class="bi bi-building"></i> Matricule Département: 
+                <span class="matricule-dept">{{ etudiant.matricule_departement }}</span>
+            </p>
+            {% endif %}
+        </div>
     </div>
     <div>
+        {% if user.profil.est_admin or user.profil.est_scolarite %}
         <a href="{% url 'modifier_etudiant' etudiant.matricule %}" class="btn btn-warning">
             <i class="bi bi-pencil"></i> Modifier
         </a>
+        {% endif %}
         <a href="{% url 'liste_etudiants' %}" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Retour
         </a>
@@ -24,62 +114,62 @@
 <div class="row">
     <!-- Informations personnelles -->
     <div class="col-md-4">
-        <div class="table-card text-center">
+        <div class="info-card text-center">
             {% if etudiant.photo %}
             <div class="d-flex justify-content-center mb-3">
-                <img src="{{ etudiant.photo.url }}" class="rounded-circle" width="150" height="150" style="object-fit: cover;">
+                <img src="{{ etudiant.photo.url }}" class="rounded-circle" width="150" height="150" style="object-fit: cover; border: 4px solid var(--accent-gold);">
             </div>
             {% else %}
             <div class="d-flex justify-content-center mb-3">
-                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
-                    style="width: 150px; height: 150px; font-size: 60px;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                    style="width: 150px; height: 150px; font-size: 60px; background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)); color: var(--accent-gold); border: 4px solid var(--accent-gold);">
                     {{ etudiant.nom.0 }}{{ etudiant.prenom.0 }}
                 </div>
             </div>
             {% endif %}
             
             <h4>{{ etudiant.nom_complet }}</h4>
-            <p class="text-muted">{{ etudiant.matricule }}</p>
             
             <div class="mb-3">
-                <span class="badge bg-info me-2">{{ etudiant.filiere.code }}</span>
-                <span class="badge bg-secondary">{{ etudiant.niveau.nom }}</span>
+                <span class="badge bg-primary me-2" style="font-size: 1rem;">{{ etudiant.filiere.code }}</span>
             </div>
+            
+            <div class="text-muted small mb-2">{{ etudiant.filiere.nom_complet }}</div>
             
             <hr>
             
             <div class="text-start">
                 <p class="mb-2">
-                    <i class="bi bi-envelope"></i> <strong>Email:</strong><br>
-                    {{ etudiant.email|default:"—" }}
+                    <i class="bi bi-envelope text-primary"></i> <strong>Email:</strong><br>
+                    <small>{{ etudiant.email|default:"Non renseigné" }}</small>
                 </p>
                 <p class="mb-2">
-                    <i class="bi bi-telephone"></i> <strong>Téléphone:</strong><br>
-                    {{ etudiant.telephone|default:"—" }}
+                    <i class="bi bi-telephone text-primary"></i> <strong>Téléphone:</strong><br>
+                    <small>{{ etudiant.telephone|default:"Non renseigné" }}</small>
                 </p>
                 <p class="mb-2">
-                    <i class="bi bi-calendar"></i> <strong>Date de naissance:</strong><br>
-                    {{ etudiant.date_naissance|date:"d/m/Y"|default:"—" }}
+                    <i class="bi bi-calendar text-primary"></i> <strong>Date de naissance:</strong><br>
+                    <small>{{ etudiant.date_naissance|date:"d/m/Y"|default:"Non renseigné" }}</small>
                 </p>
                 <p class="mb-2">
-                    <i class="bi bi-geo-alt"></i> <strong>Lieu de naissance:</strong><br>
-                    {{ etudiant.lieu_naissance|default:"—" }}
+                    <i class="bi bi-geo-alt text-primary"></i> <strong>Lieu de naissance:</strong><br>
+                    <small>{{ etudiant.lieu_naissance|default:"Non renseigné" }}</small>
                 </p>
                 <p class="mb-2">
-                    <i class="bi bi-person"></i> <strong>Sexe:</strong><br>
-                    {{ etudiant.get_sexe_display|default:"—" }}
+                    <i class="bi bi-person text-primary"></i> <strong>Sexe:</strong><br>
+                    <small>{{ etudiant.get_sexe_display|default:"Non renseigné" }}</small>
                 </p>
                 <p class="mb-2">
-                    <i class="bi bi-calendar-check"></i> <strong>Inscrit le:</strong><br>
-                    {{ etudiant.date_inscription|date:"d/m/Y" }}
+                    <i class="bi bi-calendar-check text-primary"></i> <strong>Inscrit le:</strong><br>
+                    <small>{{ etudiant.date_inscription|date:"d/m/Y" }}</small>
                 </p>
             </div>
         </div>
     </div>
     
-    <!-- Statistiques et présences -->
+    <!-- Statistiques et graphiques -->
     <div class="col-md-8">
-        <!-- Statistiques -->
+        <!-- Statistiques globales -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="stat-card primary">
@@ -100,18 +190,190 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card info">
+                <div class="stat-card {% if taux_presence >= 90 %}success{% elif taux_presence >= 70 %}warning{% else %}danger{% endif %}">
                     <h3>{{ taux_presence }}%</h3>
                     <p class="small mb-0">Assiduité</p>
                 </div>
             </div>
         </div>
         
+        <!-- Graphiques -->
+        <!-- Présences par cours (Diagramme circulaire) -->
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="bi bi-pie-chart-fill"></i> Présences par cours
+            </h5>
+            <div class="chart-container">
+                <canvas id="coursChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Tableau détaillé par cours -->
+        <div class="table-card mb-4">
+            <h5 class="mb-3">
+                <i class="bi bi-table"></i> Détail par cours
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Code</th>
+                            <th>Intitulé</th>
+                            <th class="text-center">Total</th>
+                            <th class="text-center">Présent</th>
+                            <th class="text-center">Absent</th>
+                            <th class="text-center">Taux</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in stats_par_cours %}
+                        <tr>
+                            <td><strong>{{ stat.code }}</strong></td>
+                            <td>{{ stat.intitule }}</td>
+                            <td class="text-center">{{ stat.total }}</td>
+                            <td class="text-center">{{ stat.presents }}</td>
+                            <td class="text-center">{{ stat.absents }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-{{ stat.badge_class }}">{{ stat.taux }}%</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Aucune donnée disponible</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Évolution mensuelle -->
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="bi bi-calendar3"></i> Assiduité mensuelle (6 derniers mois)
+            </h5>
+            <div class="chart-container">
+                <canvas id="moisChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Évolution hebdomadaire -->
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="bi bi-calendar-week"></i> Assiduité hebdomadaire (8 dernières semaines)
+            </h5>
+            <div class="chart-container">
+                <canvas id="semaineChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Évolution par semestre -->
+        {% if semestre_labels_json != "[]" %}
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="bi bi-bar-chart-fill"></i> Assiduité par semestre
+            </h5>
+            <div class="chart-container">
+                <canvas id="semestreChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Évolution par année académique -->
+        {% if annee_labels_json != "[]" %}
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="bi bi-calendar4-range"></i> Assiduité par année académique
+            </h5>
+            <div class="chart-container">
+                <canvas id="anneeChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+        
         <!-- Historique des présences -->
         <div class="table-card">
             <h5 class="mb-4">
                 <i class="bi bi-clock-history"></i> Historique des présences
             </h5>
+            
+            <!-- Filtres -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-12">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="bi bi-book"></i> Filtrer par cours
+                            </label>
+                            <select name="cours_filtre" class="form-select" onchange="this.form.submit()">
+                                <option value="">Tous les cours</option>
+                                {% for code, intitule in cours_liste %}
+                                <option value="{{ code }}" {% if cours_filtre == code %}selected{% endif %}>
+                                    {{ code }} - {{ intitule|truncatewords:5 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="bi bi-list-check"></i> Filtrer par type
+                            </label>
+                            <select name="type_filtre" class="form-select" onchange="this.form.submit()">
+                                <option value="">Tous les types</option>
+                                {% for code, label in types_seance %}
+                                <option value="{{ code }}" {% if type_filtre == code %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="bi bi-check-circle"></i> Filtrer par statut
+                            </label>
+                            <select name="statut_filtre" class="form-select" onchange="this.form.submit()">
+                                <option value="">Tous les statuts</option>
+                                {% for code, label in statuts %}
+                                <option value="{{ code }}" {% if statut_filtre == code %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Bouton réinitialiser les filtres -->
+                        {% if cours_filtre or type_filtre or statut_filtre %}
+                        <div class="col-md-12">
+                            <a href="?page=1" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-x-circle"></i> Réinitialiser les filtres
+                            </a>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Badge de résultat -->
+            {% if cours_filtre or type_filtre or statut_filtre %}
+            <div class="alert alert-info mb-3">
+                <i class="bi bi-funnel-fill"></i> 
+                <strong>Filtres actifs :</strong>
+                {% if cours_filtre %}
+                    <span class="badge bg-primary">Cours: {{ cours_filtre }}</span>
+                {% endif %}
+                {% if type_filtre %}
+                    <span class="badge bg-info">Type: {{ type_filtre }}</span>
+                {% endif %}
+                {% if statut_filtre %}
+                    <span class="badge bg-secondary">Statut: {{ statut_filtre }}</span>
+                {% endif %}
+                <span class="ms-2">
+                    ({{ page_obj.paginator.count }} résultat{{ page_obj.paginator.count|pluralize }})
+                </span>
+            </div>
+            {% endif %}
             
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -130,25 +392,34 @@
                             <td>{{ presence.seance.date|date:"d/m/Y" }}</td>
                             <td>
                                 <strong>{{ presence.seance.cours.code }}</strong><br>
-                                <small class="text-muted">{{ presence.seance.cours.intitule }}</small>
+                                <small class="text-muted">{{ presence.seance.cours.intitule|truncatewords:5 }}</small>
                             </td>
                             <td><span class="badge bg-info">{{ presence.seance.get_type_seance_display }}</span></td>
                             <td>
                                 {% if presence.statut == 'P' %}
-                                <span class="badge badge-present">Présent</span>
+                                <span class="badge bg-success">Présent</span>
                                 {% elif presence.statut == 'A' %}
-                                <span class="badge badge-absent">Absent</span>
+                                <span class="badge bg-danger">Absent</span>
                                 {% elif presence.statut == 'R' %}
-                                <span class="badge badge-retard">Retard</span>
+                                <span class="badge bg-warning">Retard</span>
                                 {% else %}
-                                <span class="badge badge-justifie">Justifié</span>
+                                <span class="badge bg-secondary">Justifié</span>
                                 {% endif %}
                             </td>
-                            <td>{{ presence.remarque|default:"—" }}</td>
+                            <td><small>{{ presence.remarque|default:"—" }}</small></td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center text-muted">Aucune donnée de présence</td>
+                            <td colspan="5" class="text-center py-4">
+                                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-3 text-muted">
+                                    {% if cours_filtre or type_filtre or statut_filtre %}
+                                        Aucun résultat ne correspond à vos filtres
+                                    {% else %}
+                                        Aucune donnée de présence
+                                    {% endif %}
+                                </p>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -161,7 +432,9 @@
                 <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if cours_filtre %}&cours_filtre={{ cours_filtre }}{% endif %}{% if type_filtre %}&type_filtre={{ type_filtre }}{% endif %}{% if statut_filtre %}&statut_filtre={{ statut_filtre }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i> Précédent
+                        </a>
                     </li>
                     {% endif %}
                     
@@ -171,7 +444,9 @@
                     
                     {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if cours_filtre %}&cours_filtre={{ cours_filtre }}{% endif %}{% if type_filtre %}&type_filtre={{ type_filtre }}{% endif %}{% if statut_filtre %}&statut_filtre={{ statut_filtre }}{% endif %}">
+                            Suivant <i class="bi bi-chevron-right"></i>
+                        </a>
                     </li>
                     {% endif %}
                 </ul>
@@ -180,4 +455,228 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Données depuis Django
+    const coursLabels = JSON.parse('{{ cours_labels_json|safe }}');
+    const coursPresents = JSON.parse('{{ cours_presents_json|safe }}');
+    const coursAbsents = JSON.parse('{{ cours_absents_json|safe }}');
+    const coursColors = JSON.parse('{{ cours_colors_json|safe }}');
+    
+    const moisLabels = JSON.parse('{{ mois_labels_json|safe }}');
+    const moisTaux = JSON.parse('{{ mois_taux_json|safe }}');
+    const moisColors = JSON.parse('{{ mois_colors_json|safe }}');
+    
+    const semaineLabels = JSON.parse('{{ semaine_labels_json|safe }}');
+    const semaineTaux = JSON.parse('{{ semaine_taux_json|safe }}');
+    const semaineColors = JSON.parse('{{ semaine_colors_json|safe }}');
+    
+    const semestreLabels = JSON.parse('{{ semestre_labels_json|safe }}');
+    const semestreTaux = JSON.parse('{{ semestre_taux_json|safe }}');
+    const semestreColors = JSON.parse('{{ semestre_colors_json|safe }}');
+    
+    const anneeLabels = JSON.parse('{{ annee_labels_json|safe }}');
+    const anneeTaux = JSON.parse('{{ annee_taux_json|safe }}');
+    const anneeColors = JSON.parse('{{ annee_colors_json|safe }}');
+    
+    // Configuration commune
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'bottom',
+            }
+        }
+    };
+    
+    // Graphique circulaire - Présences par cours
+    if (coursLabels.length > 0) {
+        const coursCtx = document.getElementById('coursChart').getContext('2d');
+        new Chart(coursCtx, {
+            type: 'doughnut',
+            data: {
+                labels: coursLabels,
+                datasets: [{
+                    label: 'Présences',
+                    data: coursPresents,
+                    backgroundColor: coursColors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                ...commonOptions,
+                plugins: {
+                    ...commonOptions.plugins,
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} présences (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Graphique mensuel
+    if (moisLabels.length > 0) {
+        const moisCtx = document.getElementById('moisChart').getContext('2d');
+        new Chart(moisCtx, {
+            type: 'bar',
+            data: {
+                labels: moisLabels,
+                datasets: [{
+                    label: 'Taux d\'assiduité (%)',
+                    data: moisTaux,
+                    backgroundColor: moisColors,
+                    borderWidth: 1,
+                    borderColor: moisColors.map(c => c.replace('0.8', '1'))
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+    
+    // Graphique hebdomadaire
+    if (semaineLabels.length > 0) {
+        const semaineCtx = document.getElementById('semaineChart').getContext('2d');
+        new Chart(semaineCtx, {
+            type: 'line',
+            data: {
+                labels: semaineLabels,
+                datasets: [{
+                    label: 'Taux d\'assiduité (%)',
+                    data: semaineTaux,
+                    borderColor: '#0066cc',
+                    backgroundColor: 'rgba(0, 102, 204, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: semaineColors,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Graphique par semestre
+    if (semestreLabels.length > 0) {
+        const semestreCtx = document.getElementById('semestreChart').getContext('2d');
+        new Chart(semestreCtx, {
+            type: 'bar',
+            data: {
+                labels: semestreLabels,
+                datasets: [{
+                    label: 'Taux d\'assiduité (%)',
+                    data: semestreTaux,
+                    backgroundColor: semestreColors,
+                    borderWidth: 1,
+                    borderColor: semestreColors.map(c => c.replace('0.8', '1'))
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+    
+    // Graphique par année académique
+    if (anneeLabels.length > 0) {
+        const anneeCtx = document.getElementById('anneeChart').getContext('2d');
+        new Chart(anneeCtx, {
+            type: 'bar',
+            data: {
+                labels: anneeLabels,
+                datasets: [{
+                    label: 'Taux d\'assiduité (%)',
+                    data: anneeTaux,
+                    backgroundColor: anneeColors,
+                    borderWidth: 1,
+                    borderColor: anneeColors.map(c => c.replace('0.8', '1'))
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    ...commonOptions.plugins,
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter un Horaire - {{ cours.code }}{% endblock %}
+{% block page_title %}Ajouter un Horaire{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="table-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Ajouter un Horaire
+                </h4>
+                <a href="{% url 'detail_cours' cours.code %}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>Cours :</strong> 
+                <span class="badge bg-primary">{{ cours.code }}</span> - {{ cours.intitule }}
+            </div>
+            
+            <div class="alert alert-success">
+                <i class="bi bi-lightbulb"></i>
+                <strong>Astuce :</strong> Vous pouvez ajouter plusieurs horaires pour ce cours 
+                (ex: Lundi 8h-10h + Mercredi 14h-16h).
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar-week"></i> Jour de la semaine <span class="text-danger">*</span>
+                        </label>
+                        <select name="jour_semaine" class="form-select" required>
+                            <option value="">-- Choisir un jour --</option>
+                            {% for value, label in jours_semaine %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-bookmark-fill"></i> Type de séance <span class="text-danger">*</span>
+                        </label>
+                        <select name="type_seance" class="form-select" required>
+                            {% for value, label in types_seance %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-clock"></i> Heure de début <span class="text-danger">*</span>
+                        </label>
+                        <input type="time" name="heure_debut" class="form-control" required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-clock-fill"></i> Heure de fin <span class="text-danger">*</span>
+                        </label>
+                        <input type="time" name="heure_fin" class="form-control" required>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-door-open"></i> Salle
+                    </label>
+                    <select name="salle" class="form-select">
+                        <option value="">-- Utiliser la salle principale du cours ({{ cours.salle.nom|default:"Non définie" }}) --</option>
+                        {% for salle in salles %}
+                        <option value="{{ salle.id }}">
+                            {{ salle.nom }} ({{ salle.capacite }} places - {{ salle.get_type_salle_display }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">
+                        Laisser vide pour utiliser la salle principale du cours.
+                    </small>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-chat-left-text"></i> Remarque
+                    </label>
+                    <textarea name="remarque" class="form-control" rows="3" 
+                              placeholder="Ex: Salle informatique requise, groupe dédoublé, etc."></textarea>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'detail_cours' cours.code %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Ajouter l'horaire
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Horaires existants -->
+{% if cours.get_horaires %}
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-list-check"></i> Horaires actuels du cours ({{ cours.get_horaires.count }})
+            </h5>
+            
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Jour</th>
+                            <th>Horaire</th>
+                            <th>Type</th>
+                            <th>Salle</th>
+                            <th>Durée</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for horaire in cours.get_horaires %}
+                        <tr>
+                            <td><strong>{{ horaire.get_jour_semaine_display }}</strong></td>
+                            <td>{{ horaire.heure_debut|time:"H:i" }} - {{ horaire.heure_fin|time:"H:i" }}</td>
+                            <td><span class="badge bg-info">{{ horaire.get_type_seance_display }}</span></td>
+                            <td>{{ horaire.salle.nom|default:"—" }}</td>
+                            <td>{{ horaire.get_duree }}h</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -10,30 +10,25 @@
 
 <div class="table-card mb-4">
     <form method="get" class="row g-3">
-        <div class="col-md-5">
+        <div class="col-md-10">
             <label class="form-label">Filière <span class="text-danger">*</span></label>
             <select name="filiere" class="form-select" required>
                 <option value="">-- Choisir une filière --</option>
-                {% for filiere in filieres %}
-                <option value="{{ filiere.id }}" 
-                        {% if filiere_selectionnee == filiere.id|stringformat:"s" %}selected{% endif %}>
-                    {{ filiere.nom }}
-                </option>
+                {% regroup filieres by specialite as filieres_par_specialite %}
+                {% for specialite_group in filieres_par_specialite %}
+                <optgroup label="{{ specialite_group.list.0.get_specialite_display }}">
+                    {% for filiere in specialite_group.list %}
+                    <option value="{{ filiere.id }}" 
+                            {% if filiere_selectionnee == filiere.id|stringformat:"s" %}selected{% endif %}>
+                        {{ filiere.nom_complet }}
+                    </option>
+                    {% endfor %}
+                </optgroup>
                 {% endfor %}
             </select>
+            <small class="text-muted">Inclut : Spécialité + Formation + Niveau</small>
         </div>
-        <div class="col-md-5">
-            <label class="form-label">Niveau <span class="text-danger">*</span></label>
-            <select name="niveau" class="form-select" required>
-                <option value="">-- Choisir un niveau --</option>
-                {% for niveau in niveaux %}
-                <option value="{{ niveau.id }}" 
-                        {% if niveau_selectionne == niveau.id|stringformat:"s" %}selected{% endif %}>
-                    {{ niveau.nom }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
+        <!-- ❌ SUPPRIMÉ : filtre niveau -->
         <div class="col-md-2">
             <label class="form-label">&nbsp;</label>
             <button type="submit" class="btn btn-primary w-100">

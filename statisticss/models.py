@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from students.models import Etudiant, Filiere, Niveau
+from students.models import Etudiant, Filiere  # ✅ Suppression de Niveau
 from courses.models import Cours
 
 
@@ -10,7 +10,6 @@ class RapportPresence(models.Model):
         ('ETUDIANT', 'Par étudiant'),
         ('COURS', 'Par cours'),
         ('FILIERE', 'Par filière'),
-        ('NIVEAU', 'Par niveau'),
         ('GLOBAL', 'Global'),
     ]
     
@@ -37,9 +36,7 @@ class RapportPresence(models.Model):
     filiere = models.ForeignKey(Filiere, on_delete=models.SET_NULL, 
                                null=True, blank=True,
                                verbose_name="Filière")
-    niveau = models.ForeignKey(Niveau, on_delete=models.SET_NULL, 
-                              null=True, blank=True,
-                              verbose_name="Niveau")
+    # ❌ SUPPRIMÉ : niveau
     
     date_debut = models.DateField(blank=True, null=True, verbose_name="Date de début")
     date_fin = models.DateField(blank=True, null=True, verbose_name="Date de fin")

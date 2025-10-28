@@ -70,45 +70,57 @@
     </div>
 </div>
 
-<!-- Statistiques par filière -->
+<!-- Statistiques par filière (Spécialité + Formation + Niveau) -->
 <div class="row">
-    <div class="col-md-6 mb-4">
+    <div class="col-md-12 mb-4">
         <div class="table-card">
             <h5 class="mb-4">
-                <i class="bi bi-folder2-open text-primary"></i> Taux de Présence par Filière
+                <i class="bi bi-diagram-3-fill text-primary"></i> Taux de Présence par Filière
             </h5>
+            <p class="text-muted small mb-3">
+                <i class="bi bi-info-circle"></i> 
+                Chaque filière représente une combinaison : <strong>Spécialité + Formation + Niveau</strong>
+            </p>
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle">
+                    <thead>
                         <tr>
-                            <th>Filière</th>
-                            <th class="text-center">Étudiants</th>
-                            <th class="text-center">Taux de présence</th>
+                            <th width="15%">Code</th>
+                            <th width="40%">Filière Complète</th>
+                            <th width="15%" class="text-center">Étudiants</th>
+                            <th width="30%" class="text-center">Taux de présence</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for stat in stats_filieres %}
                         <tr>
                             <td>
-                                <strong>{{ stat.filiere.code }}</strong><br>
-                                <small class="text-muted">{{ stat.filiere.nom }}</small>
+                                <span class="badge bg-primary fs-6">{{ stat.filiere.code }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ stat.filiere.get_specialite_display }}</strong><br>
+                                <small class="text-muted">
+                                    <i class="bi bi-mortarboard"></i> {{ stat.filiere.get_formation_display }} - {{ stat.filiere.get_niveau_display }}
+                                </small>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-secondary">{{ stat.nb_etudiants }}</span>
+                                <span class="badge" style="background: var(--accent-gold); color: var(--primary-blue); font-size: 1rem;">
+                                    {{ stat.nb_etudiants }}
+                                </span>
                             </td>
                             <td class="text-center">
-                                <div class="progress" style="height: 25px;">
+                                <div class="progress" style="height: 30px;">
                                     {% if stat.taux_presence >= 75 %}
                                     <div class="progress-bar bg-success" style="width: {{ stat.taux_presence }}%">
-                                        {{ stat.taux_presence }}%
+                                        <strong>{{ stat.taux_presence }}%</strong>
                                     </div>
                                     {% elif stat.taux_presence >= 50 %}
                                     <div class="progress-bar bg-warning" style="width: {{ stat.taux_presence }}%">
-                                        {{ stat.taux_presence }}%
+                                        <strong>{{ stat.taux_presence }}%</strong>
                                     </div>
                                     {% else %}
                                     <div class="progress-bar bg-danger" style="width: {{ stat.taux_presence }}%">
-                                        {{ stat.taux_presence }}%
+                                        <strong>{{ stat.taux_presence }}%</strong>
                                     </div>
                                     {% endif %}
                                 </div>
@@ -116,58 +128,10 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="3" class="text-center text-muted">Aucune donnée disponible</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Statistiques par niveau -->
-    <div class="col-md-6 mb-4">
-        <div class="table-card">
-            <h5 class="mb-4">
-                <i class="bi bi-bar-chart-line text-success"></i> Taux de Présence par Niveau
-            </h5>
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Niveau</th>
-                            <th class="text-center">Étudiants</th>
-                            <th class="text-center">Taux de présence</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for stat in stats_niveaux %}
-                        <tr>
-                            <td><strong>{{ stat.niveau.nom }}</strong></td>
-                            <td class="text-center">
-                                <span class="badge bg-secondary">{{ stat.nb_etudiants }}</span>
+                            <td colspan="4" class="text-center py-5">
+                                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-3">Aucune donnée disponible</p>
                             </td>
-                            <td class="text-center">
-                                <div class="progress" style="height: 25px;">
-                                    {% if stat.taux_presence >= 75 %}
-                                    <div class="progress-bar bg-success" style="width: {{ stat.taux_presence }}%">
-                                        {{ stat.taux_presence }}%
-                                    </div>
-                                    {% elif stat.taux_presence >= 50 %}
-                                    <div class="progress-bar bg-warning" style="width: {{ stat.taux_presence }}%">
-                                        {{ stat.taux_presence }}%
-                                    </div>
-                                    {% else %}
-                                    <div class="progress-bar bg-danger" style="width: {{ stat.taux_presence }}%">
-                                        {{ stat.taux_presence }}%
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center text-muted">Aucune donnée disponible</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -186,7 +150,7 @@
         <div class="col-md-4">
             <a href="{% url 'statistiques_par_classe' %}" class="btn btn-outline-primary w-100 py-3">
                 <i class="bi bi-people fs-4 d-block mb-2"></i>
-                Statistiques par Classe
+                Statistiques par Filière
             </a>
         </div>
         <div class="col-md-4">

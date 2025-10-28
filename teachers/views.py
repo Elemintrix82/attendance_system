@@ -6,7 +6,7 @@ from django.db.models import Q, Count
 from django.core.paginator import Paginator
 from .models import Enseignant
 from courses.models import Cours
-from students.models import Filiere, Niveau
+from students.models import Filiere  # ✅ Suppression de Niveau
 
 
 @login_required
@@ -52,7 +52,7 @@ def detail_enseignant(request, matricule):
     
     # Récupérer les cours de l'enseignant
     cours = Cours.objects.filter(enseignant=enseignant, actif=True).select_related(
-        'filiere', 'niveau', 'salle'
+        'filiere', 'salle'
     )
     
     context = {
@@ -104,15 +104,14 @@ def assigner_cours(request, matricule):
     cours_assignes = Cours.objects.filter(
         enseignant=enseignant, 
         actif=True
-    ).select_related('filiere', 'niveau')
+    ).select_related('filiere')
     
     # Cours disponibles (sans enseignant OU assignés à d'autres)
-    tous_les_cours = Cours.objects.filter(actif=True).select_related('filiere', 'niveau', 'enseignant')
+    tous_les_cours = Cours.objects.filter(actif=True).select_related('filiere', 'enseignant')
     
     # Filtres
     search_query = request.GET.get('search', '')
     filiere_id = request.GET.get('filiere')
-    niveau_id = request.GET.get('niveau')
     
     cours_disponibles = tous_les_cours.exclude(enseignant=enseignant)
     
@@ -125,15 +124,11 @@ def assigner_cours(request, matricule):
     if filiere_id:
         cours_disponibles = cours_disponibles.filter(filiere_id=filiere_id)
     
-    if niveau_id:
-        cours_disponibles = cours_disponibles.filter(niveau_id=niveau_id)
-    
     context = {
         'enseignant': enseignant,
         'cours_assignes': cours_assignes,
         'cours_disponibles': cours_disponibles,
-        'filieres': Filiere.objects.all(),
-        'niveaux': Niveau.objects.all(),
+        'filieres': Filiere.objects.filter(actif=True),
         'search_query': search_query,
     }
     
@@ -142,7 +137,7 @@ def assigner_cours(request, matricule):
 
 @login_required
 def ajouter_enseignant(request):
-    """Ajouter un nouvel enseignant AVEC compte et permissions - VERSION FUSIONNÉE"""
+    """Ajouter un nouvel enseignant AVEC compte et permissions"""
     
     # Vérification des permissions - RÉSERVÉ ADMIN/SCOLARITÉ
     if not hasattr(request.user, 'profil'):
@@ -150,7 +145,7 @@ def ajouter_enseignant(request):
         return redirect('dashboard')
     
     if not (request.user.profil.est_admin() or request.user.profil.est_scolarite()):
-        messages.error(request, 'Accès refusé. Seuls les administrateurs et la scolarité peuvent créer des enseignants.')
+        messages.error(request, '⛔ Accès refusé. Seuls les administrateurs et la scolarité peuvent créer des enseignants.')
         return redirect('dashboard')
     
     if request.method == 'POST':
@@ -171,12 +166,12 @@ def ajouter_enseignant(request):
             
             # Vérifier si le matricule existe déjà
             if User.objects.filter(username=matricule).exists():
-                messages.error(request, f'Un utilisateur avec le matricule {matricule} existe déjà.')
+                messages.error(request, f'❌ Un utilisateur avec le matricule {matricule} existe déjà.')
                 return redirect('ajouter_enseignant')
             
             # Vérifier si l'email existe déjà
             if User.objects.filter(email=email).exists():
-                messages.error(request, f'Un utilisateur avec l\'email {email} existe déjà.')
+                messages.error(request, f'❌ Un utilisateur avec l\'email {email} existe déjà.')
                 return redirect('ajouter_enseignant')
             
             # 1. Créer le User Django
@@ -244,7 +239,7 @@ def modifier_enseignant(request, matricule):
     
     # Vérification des permissions
     if not (request.user.profil.est_admin() or request.user.profil.est_scolarite()):
-        messages.error(request, 'Accès refusé.')
+        messages.error(request, '⛔ Accès refusé.')
         return redirect('dashboard')
     
     enseignant = get_object_or_404(Enseignant, matricule=matricule)
@@ -294,12 +289,41 @@ def modifier_enseignant(request, matricule):
 
 
 @login_required
+def supprimer_enseignant(request, matricule):
+    """Supprimer un enseignant ET son compte utilisateur"""
+    
+    # Vérification des permissions - RÉSERVÉ ADMIN
+    if not request.user.profil.est_admin():
+        messages.error(request, '⛔ Accès refusé. Seuls les administrateurs peuvent supprimer des enseignants.')
+        return redirect('liste_enseignants')
+    
+    enseignant = get_object_or_404(Enseignant, matricule=matricule)
+    
+    if request.method == 'POST':
+        try:
+            nom_complet = enseignant.nom_complet()
+            user = enseignant.user
+            
+            # Supprimer l'enseignant (cela supprimera aussi le user grâce à on_delete=CASCADE)
+            enseignant.delete()
+            
+            messages.success(request, f'✅ L\'enseignant {nom_complet} et son compte ont été supprimés avec succès.')
+            return redirect('liste_enseignants')
+        
+        except Exception as e:
+            messages.error(request, f'❌ Erreur lors de la suppression : {str(e)}')
+            return redirect('detail_enseignant', matricule=matricule)
+    
+    return redirect('detail_enseignant', matricule=matricule)
+
+
+@login_required
 def reinitialiser_mot_de_passe_enseignant(request, matricule):
     """Réinitialiser le mot de passe d'un enseignant - RÉSERVÉ ADMIN/SCOLARITÉ"""
     
     # Vérification des permissions
     if not (request.user.profil.est_admin() or request.user.profil.est_scolarite()):
-        messages.error(request, 'Accès refusé.')
+        messages.error(request, '⛔ Accès refusé.')
         return redirect('dashboard')
     
     enseignant = get_object_or_404(Enseignant, matricule=matricule)

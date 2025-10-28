@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter un Horaire - {{ niveau.nom_complet }}{% endblock %}
+{% block page_title %}Ajouter un Horaire{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-clock-fill"></i> Ajouter un Horaire
+            </h2>
+            <p class="text-muted mb-0">
+                Pour le niveau <span class="badge bg-primary">{{ niveau.nom_complet }}</span>
+            </p>
+        </div>
+        <a href="{% url 'detail_niveau' niveau.id %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <!-- Info du niveau -->
+        <div class="alert" style="background: var(--light-gold); border-left: 4px solid var(--accent-gold);">
+            <h6 class="mb-2" style="color: var(--primary-blue);">
+                <i class="bi bi-info-circle"></i> Niveau concerné
+            </h6>
+            <p class="mb-0">
+                <strong>{{ niveau.get_cycle_display }}</strong> - {{ niveau.get_nom_display }}
+            </p>
+        </div>
+        
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-clock-history"></i> Définir l'horaire
+            </h5>
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="jour_semaine" class="form-label">Jour de la semaine <span class="text-danger">*</span></label>
+                    <select class="form-select" id="jour_semaine" name="jour_semaine" required>
+                        <option value="">Sélectionnez un jour</option>
+                        {% for code, label in jours %}
+                        <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="heure_debut" class="form-label">Heure de début <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control" id="heure_debut" name="heure_debut" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="heure_fin" class="form-label">Heure de fin <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control" id="heure_fin" name="heure_fin" required>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="salle" class="form-label">Salle</label>
+                    <select class="form-select" id="salle" name="salle">
+                        <option value="">Non définie</option>
+                        {% for salle in salles %}
+                        <option value="{{ salle.id }}">
+                            {{ salle.nom }} - {{ salle.get_type_salle_display }} (Cap: {{ salle.capacite }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Optionnel - La salle peut être définie plus tard</small>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires
+                    </small>
+                    <div>
+                        <a href="{% url 'detail_niveau' niveau.id %}" class="btn btn-secondary me-2">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Info -->
+        <div class="table-card mt-4">
+            <h6 class="mb-3" style="color: var(--primary-blue);">
+                <i class="bi bi-lightbulb"></i> À propos des horaires multiples
+            </h6>
+            <p class="text-muted small mb-0">
+                Un niveau peut avoir plusieurs horaires selon les jours et les salles disponibles. 
+                Vous pouvez ajouter autant d'horaires que nécessaire pour couvrir tous les créneaux du niveau.
+            </p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Validation du formulaire
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const heureDebut = document.getElementById('heure_debut').value;
+        const heureFin = document.getElementById('heure_fin').value;
+        
+        if (heureDebut && heureFin && heureDebut >= heureFin) {
+            e.preventDefault();
+            alert('⚠️ L\'heure de fin doit être après l\'heure de début');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

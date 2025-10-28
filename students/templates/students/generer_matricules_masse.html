@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Générer Matricules en Masse{% endblock %}
+{% block page_title %}Génération de Matricules{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-123"></i> Génération de Matricules en Masse
+            </h2>
+            <p class="text-muted mb-0">Générer les matricules département pour les étudiants</p>
+        </div>
+        <a href="{% url 'liste_etudiants' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        {% if count > 0 %}
+        <!-- Informations -->
+        <div class="alert alert-info mb-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-info-circle fs-2 me-3"></i>
+                <div>
+                    <h5 class="mb-1">{{ count }} étudiant(s) sans matricule département</h5>
+                    <p class="mb-0">
+                        Les matricules seront générés automatiquement selon le format : 
+                        <code class="text-dark">AAGITSPECNXXXXX</code>
+                    </p>
+                    <small class="text-muted">
+                        Exemple : <strong>25GITGRT300001</strong> 
+                        (2025, GIT, GRT=Génie Réseaux et Télécommunications, Niveau 3, numéro 1)
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Liste des étudiants concernés -->
+        <div class="table-card mb-4">
+            <h5 class="mb-4">
+                <i class="bi bi-list-ul"></i> Étudiants concernés
+            </h5>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th width="15%">Matricule Perso</th>
+                            <th width="25%">Nom Complet</th>
+                            <th width="25%">Filière</th>
+                            <th width="35%">Matricule à Générer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for etudiant in etudiants_sans_matricule|slice:":20" %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary">{{ etudiant.matricule }}</span>
+                            </td>
+                            <td>{{ etudiant.nom_complet }}</td>
+                            <td>
+                                <span class="badge bg-primary">{{ etudiant.filiere.code }}</span>
+                                <br>
+                                <small class="text-muted">{{ etudiant.filiere.nom_complet|truncatewords:3 }}</small>
+                            </td>
+                            <td>
+                                <code style="background: var(--light-gold); padding: 5px 10px; border-radius: 5px; color: var(--primary-blue); font-weight: bold;">
+                                    {% with annee=etudiant.date_inscription|date:"y" %}
+                                    {% with spec=etudiant.filiere.specialite|slice:":3"|upper %}
+                                    {% with niveau=etudiant.filiere.niveau|slice:"-1" %}
+                                    {{ annee }}GIT{{ spec }}{{ niveau }}XXXXX
+                                    {% endwith %}
+                                    {% endwith %}
+                                    {% endwith %}
+                                </code>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% if count > 20 %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                <i class="bi bi-three-dots"></i> 
+                                et {{ count|add:"-20" }} autre(s) étudiant(s)
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Confirmation -->
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-exclamation-triangle text-warning"></i> Confirmation
+            </h5>
+            
+            <div class="alert alert-warning">
+                <strong>Attention :</strong> Cette action va générer automatiquement les matricules 
+                département pour {{ count }} étudiant(s). Les matricules seront uniques et incrémentaux.
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{% url 'liste_etudiants' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-warning btn-lg">
+                        <i class="bi bi-123"></i> Générer {{ count }} Matricule(s)
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        {% else %}
+        <!-- Aucun étudiant sans matricule -->
+        <div class="text-center py-5">
+            <i class="bi bi-check-circle text-success" style="font-size: 5rem;"></i>
+            <h4 class="mt-4 mb-2">Tous les étudiants ont un matricule !</h4>
+            <p class="text-muted mb-4">
+                Tous les étudiants actifs possèdent déjà un matricule département.
+            </p>
+            <a href="{% url 'liste_etudiants' %}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

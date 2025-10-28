@@ -1,0 +1,499 @@
+{% extends 'base.html' %}
+
+{% block title %}Sélection Filière - Présences{% endblock %}
+{% block page_title %}Gestion des Présences{% endblock %}
+
+{% block extra_css %}
+<style>
+    .selection-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        transition: all 0.3s;
+    }
+    
+    .selection-card.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    
+    .selection-header {
+        background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .option-group {
+        margin-bottom: 2rem;
+    }
+    
+    .option-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-blue);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .option-label .badge {
+        font-size: 0.8rem;
+    }
+    
+    .option-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .option-btn {
+        padding: 1.5rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+    }
+    
+    .option-btn:hover:not(.disabled) {
+        border-color: var(--accent-gold);
+        background: rgba(255, 215, 0, 0.05);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .option-btn.selected {
+        border-color: var(--primary-blue);
+        background: linear-gradient(135deg, rgba(0, 102, 204, 0.1), rgba(0, 76, 153, 0.1));
+        border-width: 3px;
+    }
+    
+    .option-btn.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+    
+    .option-btn input[type="radio"] {
+        display: none;
+    }
+    
+    .option-btn label {
+        cursor: pointer;
+        margin: 0;
+        display: block;
+    }
+    
+    .option-code {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-blue);
+        margin-bottom: 0.5rem;
+    }
+    
+    .option-name {
+        font-size: 0.9rem;
+        color: #6b7280;
+    }
+    
+    .niveau-btn {
+        padding: 1rem;
+    }
+    
+    .niveau-code {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--accent-gold);
+    }
+    
+    .submit-btn-container {
+        text-align: center;
+        margin-top: 3rem;
+    }
+    
+    .submit-btn {
+        padding: 1rem 3rem;
+        font-size: 1.2rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+        border: none;
+        color: white;
+        transition: all 0.3s;
+    }
+    
+    .submit-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    
+    .submit-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .info-box {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border-left: 4px solid var(--primary-blue);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 2rem;
+    }
+    
+    .step-indicator {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        background: var(--primary-blue);
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 30px;
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        opacity: 0.3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="selection-header">
+    <h1 class="mb-3">
+        <i class="bi bi-funnel-fill"></i> Sélection de Filière
+    </h1>
+    <p class="lead mb-0">Choisissez la formation, puis la spécialité et le niveau correspondants</p>
+</div>
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <form method="get" action="{% url 'presences_par_filiere' %}" id="selection-form">
+            
+            <!-- 1. Formation -->
+            <div class="selection-card" id="card-formation">
+                <div class="option-group">
+                    <div class="option-label">
+                        <span class="step-indicator">1</span>
+                        <i class="bi bi-mortarboard-fill fs-4"></i>
+                        <span>Sélectionner la Formation</span>
+                    </div>
+                    <div class="option-buttons" id="formations-container">
+                        {% for code, label in formations %}
+                        <div class="option-btn {% if formation_selected == code %}selected{% endif %}" 
+                             onclick="selectFormation('{{ code }}')">
+                            <input type="radio" name="formation" value="{{ code }}" id="formation_{{ code }}" 
+                                   {% if formation_selected == code %}checked{% endif %} required>
+                            <label for="formation_{{ code }}">
+                                <div class="option-code">{{ code }}</div>
+                                <div class="option-name">{{ label }}</div>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 2. Spécialité -->
+            <div class="selection-card {% if not formation_selected %}disabled{% endif %}" id="card-specialite">
+                <div class="option-group">
+                    <div class="option-label">
+                        <span class="step-indicator">2</span>
+                        <i class="bi bi-gear-fill fs-4"></i>
+                        <span>Sélectionner la Spécialité</span>
+                        {% if not formation_selected %}
+                        <span class="badge bg-secondary">Choisissez d'abord une formation</span>
+                        {% endif %}
+                    </div>
+                    <div class="option-buttons" id="specialites-container">
+                        {% if specialites %}
+                            {% for code, label in specialites %}
+                            <div class="option-btn {% if specialite_selected == code %}selected{% endif %}" 
+                                 onclick="selectSpecialite('{{ code }}')">
+                                <input type="radio" name="specialite" value="{{ code }}" id="specialite_{{ code }}" 
+                                       {% if specialite_selected == code %}checked{% endif %} required>
+                                <label for="specialite_{{ code }}">
+                                    <div class="option-code">{{ code }}</div>
+                                    <div class="option-name">{{ label }}</div>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p class="mt-3">Sélectionnez une formation pour voir les spécialités disponibles</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3. Niveau -->
+            <div class="selection-card {% if not specialite_selected %}disabled{% endif %}" id="card-niveau">
+                <div class="option-group">
+                    <div class="option-label">
+                        <span class="step-indicator">3</span>
+                        <i class="bi bi-bar-chart-fill fs-4"></i>
+                        <span>Sélectionner le Niveau</span>
+                        {% if not specialite_selected %}
+                        <span class="badge bg-secondary">Choisissez d'abord une spécialité</span>
+                        {% endif %}
+                    </div>
+                    <div class="option-buttons" id="niveaux-container">
+                        {% if niveaux %}
+                            {% for code, label in niveaux %}
+                            <div class="option-btn niveau-btn {% if niveau_selected == code %}selected{% endif %}" 
+                                 onclick="selectNiveau('{{ code }}')">
+                                <input type="radio" name="niveau" value="{{ code }}" id="niveau_{{ code }}" 
+                                       {% if niveau_selected == code %}checked{% endif %} required>
+                                <label for="niveau_{{ code }}">
+                                    <div class="niveau-code">{{ code }}</div>
+                                    <div class="option-name">{{ label }}</div>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <p class="mt-3">Sélectionnez une spécialité pour voir les niveaux disponibles</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bouton de soumission -->
+            <div class="submit-btn-container">
+                <button type="submit" class="submit-btn" id="submit-btn" disabled>
+                    <i class="bi bi-search"></i> Afficher les Présences
+                </button>
+            </div>
+            
+            <!-- Info box -->
+            <div class="info-box">
+                <h6 class="fw-bold mb-2">
+                    <i class="bi bi-info-circle-fill"></i> Information
+                </h6>
+                <p class="mb-0">
+                    <strong>Navigation en cascade :</strong> Les spécialités et niveaux disponibles s'adaptent 
+                    automatiquement selon la formation choisie. Si aucun étudiant n'est enregistré dans une filière, 
+                    vous aurez la possibilité d'en ajouter directement.
+                </p>
+            </div>
+            
+        </form>
+        
+        <!-- Lien vers vue globale -->
+        <div class="text-center mt-4">
+            <a href="{% url 'liste_presences' %}" class="btn btn-outline-primary">
+                <i class="bi bi-list-ul"></i> Voir toutes les présences (Vue globale)
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Configuration des filières (doit correspondre à CONFIGURATION_FILIERES dans views.py)
+const CONFIGURATION = {
+    'FI': {
+        'GLO': ['N3', 'N4', 'N5'],
+        'GRT': ['N3', 'N4', 'N5']
+    },
+    'FA': {
+        'GLO': ['N3', 'N4', 'N5'],
+        'GRT': ['N3', 'N4', 'N5']
+    },
+    'MP': {
+        'CSCD': ['N4', 'N5'],
+        'SSI': ['N4', 'N5'],
+        'GLO': ['N4', 'N5'],
+        'GRT': ['N4', 'N5'],
+        'GI': ['N4', 'N5']
+    }
+};
+
+const SPECIALITES_LABELS = {
+    'GLO': 'Génie Logistique',
+    'GRT': 'Génie des Réseaux et Télécommunications',
+    'CSCD': 'Cyber-Sécurité et Cryptographie Digitale',
+    'SSI': 'Systèmes et Sécurité Informatique',
+    'GI': 'Génie Informatique et Télécommunication'
+};
+
+function selectFormation(code) {
+    // Cocher le radio
+    document.getElementById(`formation_${code}`).checked = true;
+    
+    // Mettre à jour les styles
+    document.querySelectorAll('input[name="formation"]').forEach(input => {
+        const btn = input.closest('.option-btn');
+        if (input.value === code) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+    
+    // Réinitialiser spécialité et niveau
+    document.querySelectorAll('input[name="specialite"]').forEach(r => r.checked = false);
+    document.querySelectorAll('input[name="niveau"]').forEach(r => r.checked = false);
+    
+    // Charger les spécialités correspondantes
+    loadSpecialites(code);
+    
+    // Activer la carte spécialité
+    document.getElementById('card-specialite').classList.remove('disabled');
+    document.getElementById('card-niveau').classList.add('disabled');
+    
+    checkFormComplete();
+}
+
+function selectSpecialite(code) {
+    const formation = document.querySelector('input[name="formation"]:checked');
+    if (!formation) return;
+    
+    // Cocher le radio
+    document.getElementById(`specialite_${code}`).checked = true;
+    
+    // Mettre à jour les styles
+    document.querySelectorAll('input[name="specialite"]').forEach(input => {
+        const btn = input.closest('.option-btn');
+        if (input.value === code) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+    
+    // Réinitialiser niveau
+    document.querySelectorAll('input[name="niveau"]').forEach(r => r.checked = false);
+    
+    // Charger les niveaux correspondants
+    loadNiveaux(formation.value, code);
+    
+    // Activer la carte niveau
+    document.getElementById('card-niveau').classList.remove('disabled');
+    
+    checkFormComplete();
+}
+
+function selectNiveau(code) {
+    // Cocher le radio
+    document.getElementById(`niveau_${code}`).checked = true;
+    
+    // Mettre à jour les styles
+    document.querySelectorAll('input[name="niveau"]').forEach(input => {
+        const btn = input.closest('.option-btn');
+        if (input.value === code) {
+            btn.classList.add('selected');
+        } else {
+            btn.classList.remove('selected');
+        }
+    });
+    
+    checkFormComplete();
+}
+
+function loadSpecialites(formation) {
+    const container = document.getElementById('specialites-container');
+    
+    if (!CONFIGURATION[formation]) {
+        container.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p class="mt-3">Aucune spécialité disponible</p></div>';
+        return;
+    }
+    
+    const specialites = Object.keys(CONFIGURATION[formation]);
+    let html = '';
+    
+    specialites.forEach(code => {
+        const label = SPECIALITES_LABELS[code] || code;
+        html += `
+            <div class="option-btn" onclick="selectSpecialite('${code}')">
+                <input type="radio" name="specialite" value="${code}" id="specialite_${code}" required>
+                <label for="specialite_${code}">
+                    <div class="option-code">${code}</div>
+                    <div class="option-name">${label}</div>
+                </label>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function loadNiveaux(formation, specialite) {
+    const container = document.getElementById('niveaux-container');
+    
+    if (!CONFIGURATION[formation] || !CONFIGURATION[formation][specialite]) {
+        container.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p class="mt-3">Aucun niveau disponible</p></div>';
+        return;
+    }
+    
+    const niveaux = CONFIGURATION[formation][specialite];
+    let html = '';
+    
+    niveaux.forEach(code => {
+        const numero = code.substring(1); // N3 → 3
+        html += `
+            <div class="option-btn niveau-btn" onclick="selectNiveau('${code}')">
+                <input type="radio" name="niveau" value="${code}" id="niveau_${code}" required>
+                <label for="niveau_${code}">
+                    <div class="niveau-code">${code}</div>
+                    <div class="option-name">Niveau ${numero}</div>
+                </label>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function checkFormComplete() {
+    const formation = document.querySelector('input[name="formation"]:checked');
+    const specialite = document.querySelector('input[name="specialite"]:checked');
+    const niveau = document.querySelector('input[name="niveau"]:checked');
+    
+    const submitBtn = document.getElementById('submit-btn');
+    
+    if (formation && specialite && niveau) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+    } else {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+    }
+}
+
+// Vérifier au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    checkFormComplete();
+    
+    // Si une formation est déjà sélectionnée, charger ses spécialités
+    const formationSelected = document.querySelector('input[name="formation"]:checked');
+    if (formationSelected) {
+        loadSpecialites(formationSelected.value);
+        document.getElementById('card-specialite').classList.remove('disabled');
+    }
+    
+    // Si une spécialité est déjà sélectionnée, charger ses niveaux
+    const specialiteSelected = document.querySelector('input[name="specialite"]:checked');
+    if (formationSelected && specialiteSelected) {
+        loadNiveaux(formationSelected.value, specialiteSelected.value);
+        document.getElementById('card-niveau').classList.remove('disabled');
+    }
+});
+</script>
+{% endblock %}

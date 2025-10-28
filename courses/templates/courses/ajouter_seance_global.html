@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter une Séance{% endblock %}
+{% block page_title %}Ajouter une Séance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-plus-circle"></i> Ajouter une Séance
+            </h2>
+            <p class="text-muted mb-0">Créez une nouvelle séance de cours</p>
+        </div>
+        <a href="{% url 'liste_seances' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-info-circle"></i> Informations de la séance
+            </h5>
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Champ caché pour l'horaire de référence -->
+                <input type="hidden" id="horaire_cours_id" name="horaire_cours" value="">
+                
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="cours" class="form-label">
+                            Cours <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="cours" name="cours" required>
+                            <option value="">Sélectionnez un cours</option>
+                            {% for cours in cours_list %}
+                            <option value="{{ cours.id }}" 
+                                    data-salle="{{ cours.salle.id|default:'' }}"
+                                    data-enseignant="{{ cours.enseignant.nom_complet|default:'Non assigné' }}"
+                                    data-filiere="{{ cours.filiere.code }}">
+                                {{ cours.code }} - {{ cours.intitule }} ({{ cours.filiere.code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted" id="cours-info"></small>
+                    </div>
+                </div>
+                
+                <!-- Horaires prédéfinis (apparaissent quand cours sélectionné) -->
+                <div id="horaires-container" style="display: none;" class="mb-4">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                            <i class="bi bi-lightning-charge"></i> 
+                            <strong>Création rapide</strong> - Horaires prédéfinis du cours
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-3">
+                                Cliquez sur un horaire pour pré-remplir automatiquement les champs :
+                            </p>
+                            <div id="horaires-buttons" class="row g-3"></div>
+                            <div class="alert alert-light mt-3 mb-0">
+                                <small>
+                                    <i class="bi bi-info-circle"></i> 
+                                    Vous pourrez ensuite ajuster la date et les détails si nécessaire.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="type_seance" class="form-label">
+                            Type de séance <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="type_seance" name="type_seance" required>
+                            <option value="">Sélectionnez un type</option>
+                            {% for code, label in types_seance %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="date" class="form-label">
+                            Date <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                        <small class="text-muted" id="jour-info"></small>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="heure_debut" class="form-label">
+                            Heure de début <span class="text-danger">*</span>
+                        </label>
+                        <input type="time" class="form-control" id="heure_debut" name="heure_debut" required>
+                        <small class="text-muted" id="hint-debut"></small>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="heure_fin" class="form-label">
+                            Heure de fin <span class="text-danger">*</span>
+                        </label>
+                        <input type="time" class="form-control" id="heure_fin" name="heure_fin" required>
+                        <small class="text-muted" id="hint-fin"></small>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="salle" class="form-label">Salle</label>
+                    <select class="form-select" id="salle" name="salle">
+                        <option value="">Non définie</option>
+                        {% for salle in salles %}
+                        <option value="{{ salle.id }}">
+                            {{ salle.nom }} - {{ salle.get_type_salle_display }} (Capacité: {{ salle.capacite }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted" id="hint-salle"></small>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="contenu" class="form-label">Contenu de la séance</label>
+                    <textarea class="form-control" id="contenu" name="contenu" rows="4" 
+                              placeholder="Ex: Introduction aux bases de données relationnelles, TP sur PostgreSQL, etc."></textarea>
+                    <small class="text-muted">Optionnel - Décrivez le programme de la séance</small>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires
+                    </small>
+                    <div>
+                        <a href="{% url 'liste_seances' %}" class="btn btn-secondary me-2">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Charger les horaires du cours sélectionné
+    document.getElementById('cours').addEventListener('change', async function() {
+        const coursId = this.value;
+        const selectedOption = this.options[this.selectedIndex];
+        
+        if (coursId) {
+            // Afficher infos du cours
+            const enseignant = selectedOption.dataset.enseignant;
+            const filiere = selectedOption.dataset.filiere;
+            const salleId = selectedOption.dataset.salle;
+            
+            const coursInfo = document.getElementById('cours-info');
+            coursInfo.innerHTML = `<i class="bi bi-person"></i> ${enseignant} | <i class="bi bi-mortarboard"></i> ${filiere}`;
+            coursInfo.style.color = 'var(--primary-blue)';
+            
+            // Pré-sélectionner la salle par défaut
+            if (salleId) {
+                document.getElementById('salle').value = salleId;
+                const hintSalle = document.getElementById('hint-salle');
+                hintSalle.innerHTML = '<i class="bi bi-check-circle text-success"></i> Salle principale du cours';
+            }
+            
+            // Charger les horaires via l'API Django
+            // Note: Tu dois créer une vue API ou inclure les horaires dans le data-attribute
+            // Pour simplifier, je vais simuler avec data-attributes
+            
+            // Solution temporaire: Inclure les horaires dans le template
+            loadHoraires(coursId);
+            
+        } else {
+            // Réinitialiser
+            document.getElementById('cours-info').innerHTML = '';
+            document.getElementById('horaires-container').style.display = 'none';
+            document.getElementById('heure_debut').value = '';
+            document.getElementById('heure_fin').value = '';
+            document.getElementById('salle').value = '';
+            document.getElementById('hint-debut').innerHTML = '';
+            document.getElementById('hint-fin').innerHTML = '';
+            document.getElementById('hint-salle').innerHTML = '';
+            document.getElementById('horaire_cours_id').value = '';
+        }
+    });
+    
+    // Fonction pour charger les horaires (simulée)
+    function loadHoraires(coursId) {
+        // En production, tu ferais un fetch() vers une API
+        // fetch(`/api/cours/${coursId}/horaires/`)
+        
+        // Pour l'instant, simulons avec des données du template
+        // Tu devras modifier la vue pour passer les horaires dans le contexte
+        
+        const horairesData = {
+            {% for cours in cours_list %}
+            {{ cours.id }}: [
+                {% for horaire in cours.get_horaires %}
+                {
+                    id: {{ horaire.id }},
+                    jour: "{{ horaire.get_jour_semaine_display }}",
+                    debut: "{{ horaire.heure_debut|time:'H:i' }}",
+                    fin: "{{ horaire.heure_fin|time:'H:i' }}",
+                    type: "{{ horaire.type_seance }}",
+                    typeLabel: "{{ horaire.get_type_seance_display }}",
+                    salle: {{ horaire.salle.id|default:'null' }}
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            {% endfor %}
+        };
+        
+        const horaires = horairesData[coursId] || [];
+        const container = document.getElementById('horaires-container');
+        const buttonsDiv = document.getElementById('horaires-buttons');
+        
+        if (horaires.length > 0) {
+            container.style.display = 'block';
+            buttonsDiv.innerHTML = '';
+            
+            horaires.forEach(h => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-outline-primary w-100 text-start horaire-btn';
+                btn.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${h.jour}</strong><br>
+                            <small>
+                                <i class="bi bi-clock"></i> ${h.debut} - ${h.fin}
+                                <span class="badge ${getBadgeClass(h.type)} ms-2">${h.typeLabel}</span>
+                            </small>
+                        </div>
+                        <i class="bi bi-arrow-right-circle fs-4"></i>
+                    </div>
+                `;
+                
+                btn.onclick = function() {
+                    // Pré-remplir les champs
+                    document.getElementById('horaire_cours_id').value = h.id;
+                    document.getElementById('heure_debut').value = h.debut;
+                    document.getElementById('heure_fin').value = h.fin;
+                    document.getElementById('type_seance').value = h.type;
+                    
+                    if (h.salle) {
+                        document.getElementById('salle').value = h.salle;
+                    }
+                    
+                    // Afficher un message
+                    document.getElementById('jour-info').innerHTML = 
+                        `<i class="bi bi-info-circle text-info"></i> Basé sur l'horaire du ${h.jour}`;
+                    
+                    // Hints
+                    document.getElementById('hint-debut').innerHTML = 
+                        `<i class="bi bi-check-circle text-success"></i> Horaire prédéfini`;
+                    document.getElementById('hint-fin').innerHTML = 
+                        `<i class="bi bi-check-circle text-success"></i> Horaire prédéfini`;
+                    
+                    // Scroll vers le formulaire
+                    document.querySelector('.table-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    // Highlight du bouton
+                    document.querySelectorAll('.horaire-btn').forEach(b => {
+                        b.classList.remove('active', 'btn-primary');
+                        b.classList.add('btn-outline-primary');
+                    });
+                    this.classList.remove('btn-outline-primary');
+                    this.classList.add('btn-primary', 'active');
+                };
+                
+                col.appendChild(btn);
+                buttonsDiv.appendChild(col);
+            });
+        } else {
+            container.style.display = 'none';
+        }
+    }
+    
+    function getBadgeClass(type) {
+        switch(type) {
+            case 'CM': return 'bg-primary';
+            case 'TD': return 'bg-success';
+            case 'TP': return 'bg-info';
+            default: return 'bg-secondary';
+        }
+    }
+    
+    // Validation du formulaire
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const heureDebut = document.getElementById('heure_debut').value;
+        const heureFin = document.getElementById('heure_fin').value;
+        
+        if (heureDebut && heureFin && heureDebut >= heureFin) {
+            e.preventDefault();
+            alert('⚠️ L\'heure de fin doit être après l\'heure de début');
+            return false;
+        }
+    });
+    
+    // Définir la date d'aujourd'hui par défaut
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = today;
+</script>
+
+<style>
+    .horaire-btn {
+        transition: all 0.3s ease;
+    }
+    
+    .horaire-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .horaire-btn.active {
+        transform: none;
+    }
+    
+    #cours-info, #hint-debut, #hint-fin, #hint-salle, #jour-info {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}

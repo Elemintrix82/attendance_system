@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}Détail Salle - {{ salle.nom }}{% endblock %}
+{% block page_title %}Détail de la Salle{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-door-open-fill"></i> {{ salle.nom }}
+            </h2>
+            <p class="text-muted mb-0">
+                {{ salle.get_type_salle_display }} - {{ salle.batiment }}
+            </p>
+        </div>
+        <div>
+            {% if user.profil.est_admin or user.profil.est_scolarite %}
+            <a href="{% url 'modifier_salle' salle.id %}" class="btn btn-warning me-2">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
+            {% endif %}
+            <a href="{% url 'liste_salles' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Informations de la salle -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-info-circle"></i> Informations générales
+            </h5>
+            
+            <table class="table table-borderless">
+                <tr>
+                    <th width="40%">Nom :</th>
+                    <td><strong>{{ salle.nom }}</strong></td>
+                </tr>
+                <tr>
+                    <th>Type :</th>
+                    <td><span class="badge bg-info">{{ salle.get_type_salle_display }}</span></td>
+                </tr>
+                <tr>
+                    <th>Bâtiment :</th>
+                    <td>
+                        <i class="bi bi-building"></i> 
+                        {{ salle.batiment|default:"Non spécifié" }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Étage :</th>
+                    <td>
+                        {% if salle.etage %}
+                        Étage {{ salle.etage }}
+                        {% else %}
+                        Non spécifié
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Capacité :</th>
+                    <td>
+                        <span class="badge" style="background: var(--accent-gold); color: var(--primary-blue);">
+                            <i class="bi bi-people-fill"></i> {{ salle.capacite }} places
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Statut :</th>
+                    <td>
+                        {% if salle.disponible %}
+                        <span class="badge-present">
+                            <i class="bi bi-check-circle"></i> Disponible
+                        </span>
+                        {% else %}
+                        <span class="badge-absent">
+                            <i class="bi bi-x-circle"></i> Indisponible
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-tools"></i> Équipements
+            </h5>
+            
+            {% if salle.equipements %}
+            <div class="p-3 rounded" style="background: var(--light-gold); border-left: 4px solid var(--accent-gold);">
+                {{ salle.equipements|linebreaks }}
+            </div>
+            {% else %}
+            <p class="text-muted fst-italic">Aucun équipement spécifié</p>
+            {% endif %}
+        </div>
+        
+        <div class="table-card mt-4">
+            <h5 class="mb-3">
+                <i class="bi bi-clock-history"></i> Historique
+            </h5>
+            <p class="mb-1">
+                <strong>Date de création :</strong> 
+                {{ salle.date_creation|date:"d/m/Y à H:i" }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques d'utilisation -->
+<div class="table-card">
+    <h5 class="mb-4">
+        <i class="bi bi-graph-up"></i> Utilisation de la salle
+    </h5>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="stat-card primary">
+                <div class="d-flex align-items-center">
+                    <div class="icon me-3">
+                        <i class="bi bi-book-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">{{ salle.cours.count }}</h3>
+                        <p class="text-muted small mb-0">Cours assignés</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="stat-card success">
+                <div class="d-flex align-items-center">
+                    <div class="icon me-3">
+                        <i class="bi bi-calendar-event-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">{{ salle.seancecours_set.count }}</h3>
+                        <p class="text-muted small mb-0">Séances programmées</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="stat-card info">
+                <div class="d-flex align-items-center">
+                    <div class="icon me-3">
+                        <i class="bi bi-percent"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">{{ taux_occupation }}%</h3>
+                        <p class="text-muted small mb-0">Taux d'occupation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cours utilisant cette salle -->
+{% if salle.cours.exists %}
+<div class="table-card mt-4">
+    <h5 class="mb-4">
+        <i class="bi bi-list-ul"></i> Cours utilisant cette salle ({{ salle.cours.count }})
+    </h5>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Intitulé</th>
+                    <th>Enseignant</th>
+                    <th>Jour</th>
+                    <th>Horaire</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cours in salle.cours.all %}
+                <tr>
+                    <td><span class="badge bg-primary">{{ cours.code }}</span></td>
+                    <td>{{ cours.intitule }}</td>
+                    <td>
+                        {% if cours.enseignant %}
+                        <small>{{ cours.enseignant.nom_complet }}</small>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if cours.jour_semaine %}
+                        {{ cours.get_jour_semaine_display }}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if cours.heure_debut and cours.heure_fin %}
+                        <i class="bi bi-clock"></i>
+                        {{ cours.heure_debut|time:"H:i" }} - {{ cours.heure_fin|time:"H:i" }}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'detail_cours' cours.code %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> Voir
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

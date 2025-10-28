@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter une Filière{% endblock %}
+{% block page_title %}Ajouter une Filière{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-plus-circle"></i> Ajouter une Filière
+            </h2>
+            <p class="text-muted mb-0">Créez une nouvelle combinaison Spécialité + Formation + Niveau</p>
+        </div>
+        <a href="{% url 'liste_filieres' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-info-circle"></i> Informations de la filière
+            </h5>
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Identification -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label for="specialite" class="form-label">Spécialité <span class="text-danger">*</span></label>
+                        <select class="form-select" id="specialite" name="specialite" required>
+                            <option value="">Sélectionnez...</option>
+                            {% for code, label in specialites %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="formation" class="form-label">Formation <span class="text-danger">*</span></label>
+                        <select class="form-select" id="formation" name="formation" required>
+                            <option value="">Sélectionnez...</option>
+                            {% for code, label in formations %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="niveau" class="form-label">Niveau <span class="text-danger">*</span></label>
+                        <select class="form-select" id="niveau" name="niveau" required>
+                            <option value="">Sélectionnez...</option>
+                            {% for code, label in niveaux %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="alert" style="background: var(--light-gold); border-left: 4px solid var(--accent-gold);">
+                    <small id="preview-code" class="text-muted">
+                        <i class="bi bi-info-circle"></i> Le code sera généré automatiquement : 
+                        <strong id="code-display">-</strong>
+                    </small>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Horaire principal -->
+                <h6 class="mb-3" style="color: var(--primary-blue);">
+                    <i class="bi bi-clock"></i> Horaire principal (optionnel)
+                </h6>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="jour_semaine" class="form-label">Jour de la semaine</label>
+                        <select class="form-select" id="jour_semaine" name="jour_semaine">
+                            <option value="">Non défini</option>
+                            {% for code, label in jours %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="heure_debut" class="form-label">Heure de début</label>
+                        <input type="time" class="form-control" id="heure_debut" name="heure_debut">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="heure_fin" class="form-label">Heure de fin</label>
+                        <input type="time" class="form-control" id="heure_fin" name="heure_fin">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="salle_principale" class="form-label">Salle principale</label>
+                    <select class="form-select" id="salle_principale" name="salle_principale">
+                        <option value="">Non définie</option>
+                        {% for salle in salles %}
+                        <option value="{{ salle.id }}">
+                            {{ salle.nom }} - {{ salle.get_type_salle_display }} (Cap: {{ salle.capacite }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Vous pourrez ajouter des horaires supplémentaires après création</small>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Description -->
+                <div class="mb-4">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="4"
+                              placeholder="Décrivez cette filière..."></textarea>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires
+                    </small>
+                    <div>
+                        <a href="{% url 'liste_filieres' %}" class="btn btn-secondary me-2">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Info -->
+        <div class="table-card mt-4">
+            <h6 class="mb-3" style="color: var(--primary-blue);">
+                <i class="bi bi-lightbulb"></i> Exemples de filières
+            </h6>
+            <ul class="text-muted small mb-0">
+                <li><strong>GI-FI-N3</strong> : Génie Informatique - Formation Initiale - Niveau 3</li>
+                <li><strong>GC-FA-N2</strong> : Génie Civil - Formation Alternance - Niveau 2</li>
+                <li><strong>CSCD-MP-N5</strong> : Cyber-Sécurité - Master Pro - Niveau 5</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Prévisualisation du code
+    const specialite = document.getElementById('specialite');
+    const formation = document.getElementById('formation');
+    const niveau = document.getElementById('niveau');
+    const codeDisplay = document.getElementById('code-display');
+    
+    function updateCodePreview() {
+        const spec = specialite.value;
+        const form = formation.value;
+        const niv = niveau.value;
+        
+        if (spec && form && niv) {
+            codeDisplay.textContent = `${spec}-${form}-${niv}`;
+            codeDisplay.style.color = 'var(--primary-blue)';
+        } else {
+            codeDisplay.textContent = '-';
+            codeDisplay.style.color = '#6c757d';
+        }
+    }
+    
+    specialite.addEventListener('change', updateCodePreview);
+    formation.addEventListener('change', updateCodePreview);
+    niveau.addEventListener('change', updateCodePreview);
+    
+    // Validation horaires
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const heureDebut = document.getElementById('heure_debut').value;
+        const heureFin = document.getElementById('heure_fin').value;
+        
+        if (heureDebut && heureFin && heureDebut >= heureFin) {
+            e.preventDefault();
+            alert('⚠️ L\'heure de fin doit être après l\'heure de début');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

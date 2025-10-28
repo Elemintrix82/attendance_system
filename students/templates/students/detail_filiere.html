@@ -1,62 +1,301 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ filiere.nom }}{% endblock %}
-{% block page_title %}Détail Filière{% endblock %}
+{% block title %}Détail Filière - {{ filiere.code }}{% endblock %}
+{% block page_title %}Détail de la Filière{% endblock %}
 
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center">
-    <div>
-        <h2 class="mb-2">
-            <span class="badge bg-primary me-2">{{ filiere.code }}</span>
-            {{ filiere.nom }}
-        </h2>
-        <p class="text-muted mb-0">{{ total_etudiants }} étudiant(s) actif(s)</p>
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-diagram-3-fill"></i> {{ filiere.nom_complet }}
+            </h2>
+            <p class="text-muted mb-0">
+                <span class="badge bg-primary">{{ filiere.code }}</span>
+                <span class="badge bg-info">{{ filiere.get_formation_display }}</span>
+                <span class="badge bg-secondary">{{ filiere.get_niveau_display }}</span>
+            </p>
+        </div>
+        <div>
+            {% if user.profil.est_admin or user.profil.est_scolarite %}
+            <a href="{% url 'modifier_filiere' filiere.code %}" class="btn btn-warning me-2">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
+            {% endif %}
+            <a href="{% url 'liste_filieres' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+        </div>
     </div>
-    <a href="{% url 'liste_filieres' %}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Retour
-    </a>
 </div>
 
-{% if filiere.description %}
-<div class="alert alert-info">
-    <i class="bi bi-info-circle"></i> {{ filiere.description }}
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card success">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ total_etudiants }}</h3>
+                    <p class="text-muted small mb-0">Étudiants inscrits</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card info">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-clock-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ horaires_supp.count|add:1 }}</h3>
+                    <p class="text-muted small mb-0">Horaire(s) défini(s)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card warning">
+            <div class="d-flex align-items-center">
+                <div class="icon me-3">
+                    <i class="bi bi-book-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">{{ filiere.cours.count }}</h3>
+                    <p class="text-muted small mb-0">Cours associé(s)</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-{% endif %}
+
+<!-- Informations de la filière -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-info-circle"></i> Informations générales
+            </h5>
+            
+            <table class="table table-borderless">
+                <tr>
+                    <th width="40%">Code :</th>
+                    <td><span class="badge bg-primary fs-6">{{ filiere.code }}</span></td>
+                </tr>
+                <tr>
+                    <th>Spécialité :</th>
+                    <td><strong>{{ filiere.get_specialite_display }}</strong></td>
+                </tr>
+                <tr>
+                    <th>Formation :</th>
+                    <td><span class="badge bg-info">{{ filiere.get_formation_display }}</span></td>
+                </tr>
+                <tr>
+                    <th>Niveau :</th>
+                    <td><span class="badge bg-secondary">{{ filiere.get_niveau_display }}</span></td>
+                </tr>
+                <tr>
+                    <th>Date de création :</th>
+                    <td>{{ filiere.date_creation|date:"d/m/Y à H:i" }}</td>
+                </tr>
+                <tr>
+                    <th>Statut :</th>
+                    <td>
+                        {% if filiere.actif %}
+                        <span class="badge-present"><i class="bi bi-check-circle"></i> Active</span>
+                        {% else %}
+                        <span class="badge-absent"><i class="bi bi-x-circle"></i> Inactive</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+            
+            {% if filiere.description %}
+            <hr>
+            <h6 class="mb-2">Description :</h6>
+            <p class="text-muted">{{ filiere.description }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-clock-history"></i> Horaires
+            </h5>
+            
+            <!-- Horaire principal -->
+            <div class="mb-3">
+                <h6 class="mb-2" style="color: var(--primary-blue);">Horaire principal</h6>
+                {% if filiere.jour_semaine and filiere.heure_debut and filiere.heure_fin %}
+                <div class="p-3 rounded" style="background: var(--light-gold); border-left: 4px solid var(--accent-gold);">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-calendar me-2" style="color: var(--primary-blue);"></i>
+                        <strong>{{ filiere.get_jour_semaine_display }}</strong>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-clock me-2" style="color: var(--primary-blue);"></i>
+                        {{ filiere.heure_debut|time:"H:i" }} - {{ filiere.heure_fin|time:"H:i" }}
+                    </div>
+                    {% if filiere.salle_principale %}
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-door-open me-2" style="color: var(--primary-blue);"></i>
+                        {{ filiere.salle_principale.nom }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-circle"></i> Aucun horaire principal défini
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Horaires supplémentaires -->
+            {% if horaires_supp %}
+            <hr>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0" style="color: var(--primary-blue);">Horaires supplémentaires ({{ horaires_supp.count }})</h6>
+                {% if user.profil.est_admin or user.profil.est_scolarite %}
+                <a href="{% url 'ajouter_horaire_supplementaire' filiere.code %}" class="btn btn-success btn-sm">
+                    <i class="bi bi-plus-circle"></i> Ajouter
+                </a>
+                {% endif %}
+            </div>
+            
+            {% for horaire in horaires_supp %}
+            <div class="p-2 mb-2 rounded" style="background: #f8f9fa; border-left: 3px solid var(--primary-blue);">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <small>
+                            <i class="bi bi-calendar"></i> <strong>{{ horaire.get_jour_semaine_display }}</strong> -
+                            <i class="bi bi-clock"></i> {{ horaire.heure_debut|time:"H:i" }} - {{ horaire.heure_fin|time:"H:i" }}
+                            {% if horaire.salle %}
+                            <br><i class="bi bi-door-open"></i> {{ horaire.salle.nom }}
+                            {% endif %}
+                            {% if horaire.remarque %}
+                            <br><i class="bi bi-info-circle"></i> <em>{{ horaire.remarque }}</em>
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% if user.profil.est_admin or user.profil.est_scolarite %}
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteHoraireModal{{ horaire.id }}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    
+                    <!-- Modal de suppression horaire -->
+                    <div class="modal fade" id="deleteHoraireModal{{ horaire.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Confirmer la suppression</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Êtes-vous sûr de vouloir supprimer cet horaire supplémentaire ?</p>
+                                    <div class="alert alert-warning">
+                                        <strong>{{ horaire.get_jour_semaine_display }}</strong><br>
+                                        {{ horaire.heure_debut|time:"H:i" }} - {{ horaire.heure_fin|time:"H:i" }}
+                                        {% if horaire.salle %}<br>Salle : {{ horaire.salle.nom }}{% endif %}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        Annuler
+                                    </button>
+                                    <form method="post" action="{% url 'supprimer_horaire_supplementaire' horaire.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="bi bi-trash"></i> Supprimer
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% else %}
+            <hr>
+            <div class="text-center py-3">
+                <i class="bi bi-clock text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mt-2 mb-2">Aucun horaire supplémentaire</p>
+                {% if user.profil.est_admin or user.profil.est_scolarite %}
+                <a href="{% url 'ajouter_horaire_supplementaire' filiere.code %}" class="btn btn-success btn-sm">
+                    <i class="bi bi-plus-circle"></i> Ajouter un horaire
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
 <!-- Liste des étudiants -->
 <div class="table-card">
     <h5 class="mb-4">
-        <i class="bi bi-people-fill"></i> Étudiants de la filière
+        <i class="bi bi-people-fill"></i> Étudiants inscrits ({{ total_etudiants }})
     </h5>
     
+    {% if page_obj %}
     <div class="table-responsive">
-        <table class="table table-hover">
-            <thead class="table-light">
+        <table class="table table-hover align-middle">
+            <thead>
                 <tr>
+                    <th>Photo</th>
                     <th>Matricule</th>
-                    <th>Nom Complet</th>
-                    <th>Niveau</th>
+                    <th>Nom complet</th>
                     <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Taux de présence</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for etudiant in page_obj %}
                 <tr>
-                    <td><strong>{{ etudiant.matricule }}</strong></td>
-                    <td>{{ etudiant.nom_complet }}</td>
-                    <td><span class="badge bg-secondary">{{ etudiant.niveau.nom }}</span></td>
-                    <td>{{ etudiant.email|default:"—" }}</td>
                     <td>
-                        <a href="{% url 'detail_etudiant' etudiant.matricule %}" 
-                           class="btn btn-sm btn-outline-primary">
+                        {% if etudiant.photo %}
+                        <img src="{{ etudiant.photo.url }}" alt="{{ etudiant.nom_complet }}" 
+                             class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                        {% else %}
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                             style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)); color: var(--accent-gold); font-weight: bold;">
+                            {{ etudiant.nom.0 }}{{ etudiant.prenom.0 }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge bg-secondary">{{ etudiant.matricule }}</span></td>
+                    <td><strong>{{ etudiant.nom_complet }}</strong></td>
+                    <td><small>{{ etudiant.email|default:"—" }}</small></td>
+                    <td><small>{{ etudiant.telephone|default:"—" }}</small></td>
+                    <td>
+                        {% with taux=etudiant.get_taux_presence %}
+                        {% if taux >= 75 %}
+                        <span class="badge-present">{{ taux }}%</span>
+                        {% elif taux >= 50 %}
+                        <span class="badge-retard">{{ taux }}%</span>
+                        {% else %}
+                        <span class="badge-absent">{{ taux }}%</span>
+                        {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        <a href="{% url 'detail_etudiant' etudiant.matricule %}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye"></i> Voir
                         </a>
                     </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center text-muted">Aucun étudiant dans cette filière</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -69,21 +308,38 @@
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                    <i class="bi bi-chevron-left"></i> Précédent
+                </a>
             </li>
             {% endif %}
             
             <li class="page-item active">
-                <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
             </li>
             
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                    Suivant <i class="bi bi-chevron-right"></i>
+                </a>
             </li>
             {% endif %}
         </ul>
     </nav>
     {% endif %}
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+        <h5 class="mt-3 mb-2" style="color: var(--primary-blue);">Aucun étudiant inscrit</h5>
+        <p class="text-muted mb-4">Cette filière n'a pas encore d'étudiants</p>
+        {% if user.profil.est_admin or user.profil.est_scolarite %}
+        <a href="{% url 'ajouter_etudiant' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Ajouter un étudiant
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
+
 {% endblock %}

@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier {{ filiere.code }}{% endblock %}
+{% block page_title %}Modifier une Filière{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-pencil"></i> Modifier la Filière
+            </h2>
+            <p class="text-muted mb-0">{{ filiere.nom_complet }}</p>
+        </div>
+        <a href="{% url 'detail_filiere' filiere.code %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-info-circle"></i> Informations de la filière
+            </h5>
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Identification -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label for="specialite" class="form-label">Spécialité <span class="text-danger">*</span></label>
+                        <select class="form-select" id="specialite" name="specialite" required>
+                            {% for code, label in specialites %}
+                            <option value="{{ code }}" {% if filiere.specialite == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="formation" class="form-label">Formation <span class="text-danger">*</span></label>
+                        <select class="form-select" id="formation" name="formation" required>
+                            {% for code, label in formations %}
+                            <option value="{{ code }}" {% if filiere.formation == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="niveau" class="form-label">Niveau <span class="text-danger">*</span></label>
+                        <select class="form-select" id="niveau" name="niveau" required>
+                            {% for code, label in niveaux %}
+                            <option value="{{ code }}" {% if filiere.niveau == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="alert" style="background: var(--light-gold); border-left: 4px solid var(--accent-gold);">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> Code actuel : <strong>{{ filiere.code }}</strong> 
+                        <span id="new-code-info"></span>
+                    </small>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Horaire principal -->
+                <h6 class="mb-3" style="color: var(--primary-blue);">
+                    <i class="bi bi-clock"></i> Horaire principal
+                </h6>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="jour_semaine" class="form-label">Jour de la semaine</label>
+                        <select class="form-select" id="jour_semaine" name="jour_semaine">
+                            <option value="">Non défini</option>
+                            {% for code, label in jours %}
+                            <option value="{{ code }}" {% if filiere.jour_semaine == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="heure_debut" class="form-label">Heure de début</label>
+                        <input type="time" class="form-control" id="heure_debut" name="heure_debut"
+                               value="{{ filiere.heure_debut|time:'H:i'|default:'' }}">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="heure_fin" class="form-label">Heure de fin</label>
+                        <input type="time" class="form-control" id="heure_fin" name="heure_fin"
+                               value="{{ filiere.heure_fin|time:'H:i'|default:'' }}">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="salle_principale" class="form-label">Salle principale</label>
+                    <select class="form-select" id="salle_principale" name="salle_principale">
+                        <option value="">Non définie</option>
+                        {% for salle in salles %}
+                        <option value="{{ salle.id }}" {% if filiere.salle_principale == salle %}selected{% endif %}>
+                            {{ salle.nom }} - {{ salle.get_type_salle_display }} (Cap: {{ salle.capacite }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Description -->
+                <div class="mb-4">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="4">{{ filiere.description }}</textarea>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-clock-history"></i> 
+                        Créée le {{ filiere.date_creation|date:"d/m/Y à H:i" }}
+                    </small>
+                    <div>
+                        <a href="{% url 'detail_filiere' filiere.code %}" class="btn btn-secondary me-2">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer les modifications
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Alerte -->
+        <div class="alert alert-warning mt-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+                <div>
+                    <h6 class="mb-1">⚠️ Attention</h6>
+                    <p class="mb-0 small">
+                        Cette filière compte actuellement <strong>{{ filiere.etudiants.count }} étudiant(s)</strong>. 
+                        Les modifications peuvent impacter ces données.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Prévisualisation du nouveau code
+    const specialite = document.getElementById('specialite');
+    const formation = document.getElementById('formation');
+    const niveau = document.getElementById('niveau');
+    const newCodeInfo = document.getElementById('new-code-info');
+    const currentCode = '{{ filiere.code }}';
+    
+    function updateCodePreview() {
+        const spec = specialite.value;
+        const form = formation.value;
+        const niv = niveau.value;
+        const newCode = `${spec}-${form}-${niv}`;
+        
+        if (newCode !== currentCode) {
+            newCodeInfo.innerHTML = `→ Nouveau code: <strong style="color: var(--accent-gold);">${newCode}</strong>`;
+        } else {
+            newCodeInfo.innerHTML = '';
+        }
+    }
+    
+    specialite.addEventListener('change', updateCodePreview);
+    formation.addEventListener('change', updateCodePreview);
+    niveau.addEventListener('change', updateCodePreview);
+    
+    // Validation horaires
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const heureDebut = document.getElementById('heure_debut').value;
+        const heureFin = document.getElementById('heure_fin').value;
+        
+        if (heureDebut && heureFin && heureDebut >= heureFin) {
+            e.preventDefault();
+            alert('⚠️ L\'heure de fin doit être après l\'heure de début');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

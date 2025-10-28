@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter un Justificatif - {{ etudiant.nom_complet }}{% endblock %}
+{% block page_title %}Nouveau Justificatif{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            <!-- En-tête -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-2">
+                        <i class="bi bi-file-earmark-plus"></i> Ajouter un Justificatif
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Pour {{ etudiant.nom_complet }} ({{ etudiant.matricule }})
+                    </p>
+                </div>
+                <a href="{% url 'detail_etudiant' etudiant.matricule %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+            
+            <!-- Informations étudiant -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-fill"></i> Informations Étudiant
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Matricule :</strong> {{ etudiant.matricule }}
+                            </p>
+                            <p class="mb-2">
+                                <strong>Nom complet :</strong> {{ etudiant.nom_complet }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Filière :</strong> 
+                                <span class="badge bg-primary">{{ etudiant.filiere.code }}</span>
+                            </p>
+                            {% if etudiant.email %}
+                            <p class="mb-2">
+                                <strong>Email :</strong> {{ etudiant.email }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Formulaire -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pencil-square"></i> Informations du Justificatif
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Type de justificatif -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-tag"></i> Type de justificatif <span class="text-danger">*</span>
+                            </label>
+                            <select name="type_justificatif" class="form-select" required>
+                                <option value="">-- Sélectionner un type --</option>
+                                {% for value, label in types %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Période d'absence -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-calendar3"></i> Date de début <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" name="date_debut" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-calendar3"></i> Date de fin (optionnelle)
+                                </label>
+                                <input type="date" name="date_fin" class="form-control">
+                                <small class="text-muted">Laisser vide si absence d'un seul jour</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Motif -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-text-paragraph"></i> Motif de l'absence <span class="text-danger">*</span>
+                            </label>
+                            <textarea name="motif" 
+                                      class="form-control" 
+                                      rows="4" 
+                                      placeholder="Décrivez la raison de l'absence..."
+                                      required></textarea>
+                            <small class="text-muted">
+                                Soyez précis : exemple "Maladie avec fièvre et consultation médicale"
+                            </small>
+                        </div>
+                        
+                        <!-- Fichier joint -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-paperclip"></i> Document justificatif (PDF, Image)
+                            </label>
+                            <input type="file" 
+                                   name="fichier" 
+                                   class="form-control"
+                                   accept=".pdf,.jpg,.jpeg,.png">
+                            <small class="text-muted">
+                                Formats acceptés : PDF, JPG, PNG (max 5 Mo) - Certificat médical, convocation, etc.
+                            </small>
+                        </div>
+                        
+                        <!-- Informations importantes -->
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Important :</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Tous les champs marqués d'un <span class="text-danger">*</span> sont obligatoires</li>
+                                <li>Le justificatif sera soumis pour validation à la scolarité</li>
+                                <li>Vous serez notifié de la décision (validation ou refus)</li>
+                                <li>En cas de refus, vous pourrez soumettre un nouveau justificatif</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="d-flex gap-2 justify-content-end pt-3 border-top">
+                            <a href="{% url 'detail_etudiant' etudiant.matricule %}" 
+                               class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check2-circle"></i> Soumettre le Justificatif
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Conseils -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb"></i> Conseils pour un bon justificatif
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Joindre un document officiel (certificat, convocation)
+                            </p>
+                            <p class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Être précis sur les dates d'absence
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Expliquer clairement la raison
+                            </p>
+                            <p class="mb-0">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Soumettre rapidement après l'absence
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+    }
+</style>
+
+<script>
+// Validation des dates
+document.addEventListener('DOMContentLoaded', function() {
+    const dateDebut = document.querySelector('input[name="date_debut"]');
+    const dateFin = document.querySelector('input[name="date_fin"]');
+    
+    dateDebut.addEventListener('change', function() {
+        dateFin.min = this.value;
+    });
+    
+    dateFin.addEventListener('change', function() {
+        if (this.value && this.value < dateDebut.value) {
+            alert('La date de fin ne peut pas être antérieure à la date de début');
+            this.value = '';
+        }
+    });
+    
+    // Validation de la taille du fichier
+    const fileInput = document.querySelector('input[name="fichier"]');
+    fileInput.addEventListener('change', function() {
+        const maxSize = 5 * 1024 * 1024; // 5 Mo
+        if (this.files[0] && this.files[0].size > maxSize) {
+            alert('Le fichier est trop volumineux. Taille maximale : 5 Mo');
+            this.value = '';
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -6,8 +6,12 @@ from students.models import Etudiant
 from courses.models import SeanceCours
 
 
-# Resources pour l'import/export Excel
+# ============================================
+# RESOURCES POUR IMPORT/EXPORT
+# ============================================
+
 class PresenceResource(resources.ModelResource):
+    """Resource pour l'import/export des présences"""
     etudiant = resources.Field(
         column_name='matricule_etudiant',
         attribute='etudiant',
@@ -30,6 +34,7 @@ class PresenceResource(resources.ModelResource):
 
 
 class JustificatifResource(resources.ModelResource):
+    """Resource pour l'import/export des justificatifs"""
     etudiant = resources.Field(
         column_name='matricule_etudiant',
         attribute='etudiant',
@@ -44,7 +49,10 @@ class JustificatifResource(resources.ModelResource):
                        'date_debut', 'date_fin', 'valide', 'date_soumission')
 
 
-# Admin pour Presence
+# ============================================
+# ADMIN POUR PRESENCE
+# ============================================
+
 @admin.register(Presence)
 class PresenceAdmin(ImportExportModelAdmin):
     resource_class = PresenceResource
@@ -53,7 +61,7 @@ class PresenceAdmin(ImportExportModelAdmin):
     search_fields = ('etudiant__matricule', 'etudiant__nom', 'etudiant__prenom', 
                     'seance__cours__code', 'seance__cours__intitule')
     list_filter = ('statut', 'seance__date', 'seance__cours__filiere', 
-                  'seance__cours__niveau', 'seance__type_seance')
+                   'seance__type_seance')
     ordering = ('-seance__date', 'etudiant__nom')
     readonly_fields = ('date_saisie', 'date_modification')
     date_hierarchy = 'seance__date'
@@ -115,7 +123,10 @@ class PresenceAdmin(ImportExportModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-# Admin pour Justificatif
+# ============================================
+# ADMIN POUR JUSTIFICATIF
+# ============================================
+
 @admin.register(Justificatif)
 class JustificatifAdmin(ImportExportModelAdmin):
     resource_class = JustificatifResource
@@ -124,7 +135,7 @@ class JustificatifAdmin(ImportExportModelAdmin):
     search_fields = ('etudiant__matricule', 'etudiant__nom', 'etudiant__prenom', 'motif')
     list_filter = ('type_justificatif', 'valide', 'date_debut', 'date_fin', 'date_soumission')
     ordering = ('-date_soumission',)
-    readonly_fields = ('date_soumission', 'date_validation')
+    readonly_fields = ('date_soumission', 'date_validation', 'date_modification')
     date_hierarchy = 'date_soumission'
     
     fieldsets = (
@@ -138,7 +149,7 @@ class JustificatifAdmin(ImportExportModelAdmin):
             'fields': ('valide', 'valide_par', 'date_validation', 'remarque_validation')
         }),
         ('Métadonnées', {
-            'fields': ('date_soumission',),
+            'fields': ('date_soumission', 'date_modification'),
             'classes': ('collapse',)
         }),
     )
@@ -146,7 +157,7 @@ class JustificatifAdmin(ImportExportModelAdmin):
     def valide_display(self, obj):
         if obj.valide:
             return '<span style="color: green; font-weight: bold;">✓ Validé</span>'
-        return '<span style="color: red;">✗ Non validé</span>'
+        return '<span style="color: orange;">⏳ En attente</span>'
     valide_display.short_description = "Validation"
     valide_display.allow_tags = True
     
@@ -172,3 +183,11 @@ class JustificatifAdmin(ImportExportModelAdmin):
         updated = queryset.update(valide=False, valide_par=None, date_validation=None)
         self.message_user(request, f'{updated} justificatif(s) refusé(s).')
     refuser_justificatifs.short_description = "Refuser les justificatifs sélectionnés"
+    
+    def save_model(self, request, obj, form, change):
+        # Si on valide via l'admin et qu'il n'y a pas de validateur
+        if obj.valide and not obj.valide_par:
+            from django.utils import timezone
+            obj.valide_par = request.user
+            obj.date_validation = timezone.now()
+        super().save_model(request, obj, form, change)

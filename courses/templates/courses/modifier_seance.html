@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier Séance{% endblock %}
+{% block page_title %}Modifier une Séance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-2">
+                <i class="bi bi-pencil"></i> Modifier la Séance
+            </h2>
+            <p class="text-muted mb-0">
+                <span class="badge bg-primary">{{ seance.cours.code }}</span>
+                {{ seance.date|date:"d/m/Y" }} - {{ seance.get_type_seance_display }}
+            </p>
+        </div>
+        <a href="{% url 'detail_seance' seance.id %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <!-- Lien avec horaire régulier -->
+        {% if seance.horaire_cours %}
+        <div class="alert alert-info">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-link-45deg fs-4 me-3"></i>
+                <div>
+                    <strong>Séance liée à un horaire régulier</strong><br>
+                    <small>
+                        {{ seance.horaire_cours.get_jour_semaine_display }} 
+                        {{ seance.horaire_cours.heure_debut|time:"H:i" }}-{{ seance.horaire_cours.heure_fin|time:"H:i" }}
+                        ({{ seance.horaire_cours.get_type_seance_display }})
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Sélection rapide depuis horaire régulier -->
+        {% if seance.cours.get_horaires %}
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="bi bi-lightning-charge"></i> 
+                <strong>Mise à jour rapide</strong> - Changer l'horaire de référence
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Sélectionnez un nouvel horaire pour mettre à jour les informations de la séance :
+                </p>
+                
+                <div class="row g-3">
+                    {% for horaire in seance.cours.get_horaires %}
+                    <div class="col-md-6">
+                        <button type="button" 
+                                class="btn w-100 text-start horaire-btn
+                                       {% if seance.horaire_cours and seance.horaire_cours.id == horaire.id %}btn-primary active{% else %}btn-outline-primary{% endif %}" 
+                                data-horaire-id="{{ horaire.id }}"
+                                data-jour="{{ horaire.get_jour_semaine_display }}"
+                                data-heure-debut="{{ horaire.heure_debut|time:'H:i' }}"
+                                data-heure-fin="{{ horaire.heure_fin|time:'H:i' }}"
+                                data-salle="{{ horaire.salle.id|default:'' }}"
+                                data-type="{{ horaire.type_seance }}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ horaire.get_jour_semaine_display }}</strong>
+                                    <br>
+                                    <small>
+                                        <i class="bi bi-clock"></i> {{ horaire.heure_debut|time:"H:i" }} - {{ horaire.heure_fin|time:"H:i" }}
+                                        {% if horaire.type_seance == 'CM' %}
+                                        <span class="badge bg-primary ms-2">{{ horaire.get_type_seance_display }}</span>
+                                        {% elif horaire.type_seance == 'TD' %}
+                                        <span class="badge bg-success ms-2">{{ horaire.get_type_seance_display }}</span>
+                                        {% elif horaire.type_seance == 'TP' %}
+                                        <span class="badge bg-info ms-2">{{ horaire.get_type_seance_display }}</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                {% if seance.horaire_cours and seance.horaire_cours.id == horaire.id %}
+                                <i class="bi bi-check-circle-fill fs-4"></i>
+                                {% else %}
+                                <i class="bi bi-arrow-right-circle fs-4"></i>
+                                {% endif %}
+                            </div>
+                        </button>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Option pour supprimer le lien -->
+                    {% if seance.horaire_cours %}
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-outline-secondary w-100 text-start" 
+                                id="remove-link-btn">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Aucun horaire</strong>
+                                    <br>
+                                    <small>Supprimer le lien avec l'horaire régulier</small>
+                                </div>
+                                <i class="bi bi-x-circle fs-4"></i>
+                            </div>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Formulaire -->
+        <div class="table-card">
+            <h5 class="mb-4">
+                <i class="bi bi-info-circle"></i> Informations de la séance
+            </h5>
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Champ caché pour l'horaire de référence -->
+                <input type="hidden" id="horaire_cours_id" name="horaire_cours" 
+                       value="{% if seance.horaire_cours %}{{ seance.horaire_cours.id }}{% endif %}">
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="cours" class="form-label">Cours</label>
+                        <input type="text" class="form-control" 
+                               value="{{ seance.cours.code }} - {{ seance.cours.intitule }}"
+                               disabled
+                               style="background-color: #e9ecef;">
+                        <small class="text-muted">Le cours ne peut pas être modifié</small>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="type_seance" class="form-label">
+                            Type de séance <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="type_seance" name="type_seance" required>
+                            {% for code, label in types_seance %}
+                            <option value="{{ code }}" {% if seance.type_seance == code %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="date" class="form-label">
+                            Date <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" class="form-control" id="date" name="date" 
+                               value="{{ seance.date|date:'Y-m-d' }}" required>
+                        <small class="text-muted" id="jour-info"></small>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="heure_debut" class="form-label">
+                            Heure de début <span class="text-danger">*</span>
+                        </label>
+                        <input type="time" class="form-control" id="heure_debut" name="heure_debut" 
+                               value="{{ seance.heure_debut|time:'H:i' }}" required>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="heure_fin" class="form-label">
+                            Heure de fin <span class="text-danger">*</span>
+                        </label>
+                        <input type="time" class="form-control" id="heure_fin" name="heure_fin" 
+                               value="{{ seance.heure_fin|time:'H:i' }}" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="salle" class="form-label">Salle</label>
+                    <select class="form-select" id="salle" name="salle">
+                        <option value="">Non définie</option>
+                        {% for salle in salles %}
+                        <option value="{{ salle.id }}" {% if seance.salle == salle %}selected{% endif %}>
+                            {{ salle.nom }} - {{ salle.get_type_salle_display }} (Cap: {{ salle.capacite }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="contenu" class="form-label">Contenu de la séance</label>
+                    <textarea class="form-control" id="contenu" name="contenu" rows="4">{{ seance.contenu }}</textarea>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-clock-history"></i> 
+                        Créée le {{ seance.date_creation|date:"d/m/Y à H:i" }}
+                    </small>
+                    <div>
+                        <a href="{% url 'detail_seance' seance.id %}" class="btn btn-secondary me-2">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer les modifications
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        {% if seance.presente %}
+        <div class="alert alert-warning mt-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+                <div>
+                    <h6 class="mb-1">⚠️ Attention</h6>
+                    <p class="mb-0 small">
+                        Cette séance a déjà des présences enregistrées. 
+                        Les modifications peuvent impacter les données de présence.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Pré-remplissage depuis un horaire régulier
+    document.querySelectorAll('.horaire-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const horaireId = this.dataset.horaireId;
+            const heureDebut = this.dataset.heureDebut;
+            const heureFin = this.dataset.heureFin;
+            const salle = this.dataset.salle;
+            const type = this.dataset.type;
+            const jour = this.dataset.jour;
+            
+            // Remplir les champs
+            document.getElementById('horaire_cours_id').value = horaireId;
+            document.getElementById('heure_debut').value = heureDebut;
+            document.getElementById('heure_fin').value = heureFin;
+            document.getElementById('type_seance').value = type;
+            
+            if (salle) {
+                document.getElementById('salle').value = salle;
+            }
+            
+            // Afficher un message
+            document.getElementById('jour-info').innerHTML = 
+                `<i class="bi bi-info-circle text-info"></i> Basé sur l'horaire du ${jour}`;
+            
+            // Scroll vers le formulaire
+            document.querySelector('.table-card').scrollIntoView({ behavior: 'smooth' });
+            
+            // Highlight des boutons
+            document.querySelectorAll('.horaire-btn').forEach(b => {
+                b.classList.remove('active', 'btn-primary');
+                b.classList.add('btn-outline-primary');
+            });
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary', 'active');
+        });
+    });
+    
+    // Supprimer le lien avec l'horaire
+    const removeLinkBtn = document.getElementById('remove-link-btn');
+    if (removeLinkBtn) {
+        removeLinkBtn.addEventListener('click', function() {
+            document.getElementById('horaire_cours_id').value = '';
+            document.getElementById('jour-info').innerHTML = 
+                `<i class="bi bi-info-circle text-secondary"></i> Lien avec l'horaire régulier supprimé`;
+            
+            // Retirer le highlight de tous les boutons
+            document.querySelectorAll('.horaire-btn').forEach(b => {
+                b.classList.remove('active', 'btn-primary');
+                b.classList.add('btn-outline-primary');
+            });
+            
+            this.classList.add('active', 'btn-secondary');
+            this.classList.remove('btn-outline-secondary');
+        });
+    }
+    
+    // Validation du formulaire
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const heureDebut = document.getElementById('heure_debut').value;
+        const heureFin = document.getElementById('heure_fin').value;
+        
+        if (heureDebut && heureFin && heureDebut >= heureFin) {
+            e.preventDefault();
+            alert('⚠️ L\'heure de fin doit être après l\'heure de début');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

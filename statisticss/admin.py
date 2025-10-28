@@ -2,7 +2,6 @@ from django.contrib import admin
 from .models import RapportPresence, StatistiqueCache
 
 
-# Admin pour RapportPresence
 @admin.register(RapportPresence)
 class RapportPresenceAdmin(admin.ModelAdmin):
     list_display = ('titre', 'type_rapport', 'format_fichier', 'genere_par', 
@@ -18,8 +17,7 @@ class RapportPresenceAdmin(admin.ModelAdmin):
             'fields': ('titre', 'type_rapport', 'format_fichier')
         }),
         ('Filtres appliqués', {
-            'fields': ('etudiant', 'cours', 'filiere', 'niveau', 
-                      'date_debut', 'date_fin')
+            'fields': ('etudiant', 'cours', 'filiere', 'date_debut', 'date_fin')  # ✅ niveau supprimé
         }),
         ('Fichier généré', {
             'fields': ('fichier', 'nombre_pages', 'taille_fichier')
@@ -61,11 +59,10 @@ class RapportPresenceAdmin(admin.ModelAdmin):
             if rapport.fichier:
                 rapport.fichier.delete()
             rapport.delete()
-        self.message_user(request, f'{count} rapport(s) supprimé(s).')
-    supprimer_rapports.short_description = "Supprimer les rapports (et fichiers)"
+        self.message_user(request, f'✅ {count} rapport(s) supprimé(s).')
+    supprimer_rapports.short_description = "🗑️ Supprimer les rapports (et fichiers)"
 
 
-# Admin pour StatistiqueCache
 @admin.register(StatistiqueCache)
 class StatistiqueCacheAdmin(admin.ModelAdmin):
     list_display = ('cle', 'date_calcul', 'date_expiration', 'est_expire_display')
@@ -95,8 +92,8 @@ class StatistiqueCacheAdmin(admin.ModelAdmin):
     def vider_cache(self, request, queryset):
         count = queryset.count()
         queryset.delete()
-        self.message_user(request, f'{count} entrée(s) de cache supprimée(s).')
-    vider_cache.short_description = "Vider le cache sélectionné"
+        self.message_user(request, f'✅ {count} entrée(s) de cache supprimée(s).')
+    vider_cache.short_description = "🗑️ Vider le cache sélectionné"
     
     def supprimer_expires(self, request, queryset):
         from django.utils import timezone
@@ -105,5 +102,5 @@ class StatistiqueCacheAdmin(admin.ModelAdmin):
             if cache.est_expire():
                 cache.delete()
                 count += 1
-        self.message_user(request, f'{count} cache(s) expiré(s) supprimé(s).')
-    supprimer_expires.short_description = "Supprimer les caches expirés"
+        self.message_user(request, f'✅ {count} cache(s) expiré(s) supprimé(s).')
+    supprimer_expires.short_description = "🗑️ Supprimer les caches expirés"
