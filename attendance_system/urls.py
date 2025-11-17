@@ -28,13 +28,14 @@ from django.views.static import serve
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('accounts.urls')),
+    # path('accounts/', include('accounts.urls')),
     path('etudiants/', include('students.urls')),
     path('enseignants/', include('teachers.urls')),
     path('cours/', include('courses.urls')),
     path('presences/', include('attendance.urls')),
     path('statistiques/', include('statisticss.urls')),
     
-        # # Routes pour servir les fichiers statiques et média en mode DEBUG
+    # Routes pour servir les fichiers statiques et média en mode DEBUG
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     
